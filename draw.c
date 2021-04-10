@@ -543,7 +543,7 @@ void Draw_ConsoleBackground (int lines)
 	unsigned short	*pusdest;
 	int				f, fstep;
 	qpic_t			*conback;
-	char			ver[100];
+	char			ver[256];
 
 	conback = Draw_CachePic ("gfx/conback.lmp");
 
@@ -557,9 +557,12 @@ void Draw_ConsoleBackground (int lines)
 #elif defined(__linux__)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+#elif defined(id386)
+	sprintf (ver, "%iquake -%s%s %4.2f", SUBARCH, OLEVEL, LTOFLAGS, VERSION);
+	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #else
-	dest = conback->data + 320 - 43 + 320*186;
-	sprintf (ver, "486quake %4.2f", VERSION);
+	sprintf (ver, "%iquake -%s%s noasm %4.2f", SUBARCH, OLEVEL, LTOFLAGS, VERSION);
+	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #endif
 
 	for (x=0 ; x<strlen(ver) ; x++)

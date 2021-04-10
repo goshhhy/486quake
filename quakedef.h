@@ -61,13 +61,7 @@ void	VID_UnlockBuffer (void);
 
 #endif
 
-#if defined __i386__ // && !defined __sun__
-#define id386	1
-#else
-#define id386	0
-#endif
-
-#if id386
+#if id386 || defined __i386__
 #define UNALIGNED_OK	1	// set to 0 if unaligned accesses are not supported
 #else
 #define UNALIGNED_OK	0
