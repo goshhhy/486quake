@@ -335,6 +335,12 @@ void CL_FinishTimeDemo (void)
 	if (!time)
 		time = 1;
 	Con_Printf ("%i frames %5.1f seconds %5.1f fps\n", frames, time, frames/time);
+#if id386
+	Con_Printf ("  on %iQuake -%s%s v%4.2f\n", SUBARCH, OLEVEL, LTOFLAGS, VERSION);
+#else
+	Con_Printf ("  on %iQuake -%s%s noasm v%4.2f\n", SUBARCH, OLEVEL, LTOFLAGS, VERSION);
+#endif
+	Con_Printf ("  %s\n", CCVERSION);
 }
 
 /*

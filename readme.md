@@ -1,9 +1,8 @@
 486quake
 ========
 
-this is an attempt at building quake in a way that allows it to be faster on 486-class machines.
+this is an attempt to ressurect the original Quake DOS sources, clean up the bitrot just enough to be able
+to build with modern toolchains, and try out modern compiler optimizations to see if this is sufficient
+to make the game notably faster, particularly on 486-class machines.
 
-additional changes of note:
-- Win95 MPATH net driver removed
-    - not easy/possible to build without win95 sdk
-    - this means no tcp/ip networking is available without the Beame & Whiteside tcp/ip stack (QKEPPP20.ZIP)
+this should build on any machine with DJGPP installed and the environment set up properly.
