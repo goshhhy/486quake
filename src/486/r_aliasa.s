@@ -22,10 +22,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // x86 assembly-language Alias model transform and project code.
 //
 
-#include "asm_i386.h"
-#include "quakeasm.h"
-#include "asm_draw.h"
-#include "d_ifacea.h"
+#include "../asm_i386.h"
+#include "../quakeasm.h"
+#include "../asm_draw.h"
+#include "../d_ifacea.h"
 
 #if id386
 

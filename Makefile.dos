@@ -460,55 +460,55 @@ $(BUILDDIR)/486quake/dos_v2.o :  $(SRC_DIR)/dos_v2.c
 
 #####
 
-$(BUILDDIR)/486quake/d_copy.o :   $(SRC_DIR)/d_copy.s
+$(BUILDDIR)/486quake/d_copy.o :   $(SRC_DIR)/$(OCPU)/d_copy.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/d_draw.o :   $(SRC_DIR)/d_draw.s
+$(BUILDDIR)/486quake/d_draw.o :   $(SRC_DIR)/$(OCPU)/d_draw.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/d_draw16.o : $(SRC_DIR)/d_draw16.s
+$(BUILDDIR)/486quake/d_draw16.o : $(SRC_DIR)/$(OCPU)/d_draw16.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/d_parta.o :  $(SRC_DIR)/d_parta.s
+$(BUILDDIR)/486quake/d_parta.o :  $(SRC_DIR)/$(OCPU)/d_parta.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/d_polysa.o : $(SRC_DIR)/d_polysa.s
+$(BUILDDIR)/486quake/d_polysa.o : $(SRC_DIR)/$(OCPU)/d_polysa.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/d_scana.o :  $(SRC_DIR)/d_scana.s
+$(BUILDDIR)/486quake/d_scana.o :  $(SRC_DIR)/$(OCPU)/d_scana.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/d_spr8.o :   $(SRC_DIR)/d_spr8.s
+$(BUILDDIR)/486quake/d_spr8.o :   $(SRC_DIR)/$(OCPU)/d_spr8.s
 	$(DO_AS)
 
 $(BUILDDIR)/486quake/d_varsa.o :  $(SRC_DIR)/d_varsa.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/math.o :     $(SRC_DIR)/math.s
+$(BUILDDIR)/486quake/math.o :     $(SRC_DIR)/$(OCPU)/math.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/r_aliasa.o : $(SRC_DIR)/r_aliasa.s
+$(BUILDDIR)/486quake/r_aliasa.o : $(SRC_DIR)/$(OCPU)/r_aliasa.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/r_drawa.o :  $(SRC_DIR)/r_drawa.s
+$(BUILDDIR)/486quake/r_drawa.o :  $(SRC_DIR)/$(OCPU)/r_drawa.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/r_edgea.o :  $(SRC_DIR)/r_edgea.s
+$(BUILDDIR)/486quake/r_edgea.o :  $(SRC_DIR)/$(OCPU)/r_edgea.s
 	$(DO_AS)
 
 $(BUILDDIR)/486quake/r_varsa.o :  $(SRC_DIR)/r_varsa.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/surf16.o :   $(SRC_DIR)/surf16.s
+$(BUILDDIR)/486quake/surf16.o :   $(SRC_DIR)/$(OCPU)/surf16.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/surf8.o :    $(SRC_DIR)/surf8.s
+$(BUILDDIR)/486quake/surf8.o :    $(SRC_DIR)/$(OCPU)/surf8.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/worlda.o :   $(SRC_DIR)/worlda.s
+$(BUILDDIR)/486quake/worlda.o :   $(SRC_DIR)/$(OCPU)/worlda.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/r_aclipa.o : $(SRC_DIR)/r_aclipa.s
+$(BUILDDIR)/486quake/r_aclipa.o : $(SRC_DIR)/$(OCPU)/r_aclipa.s
 	$(DO_AS)
 
 $(BUILDDIR)/486quake/snd_mixa.o : $(SRC_DIR)/snd_mixa.s
