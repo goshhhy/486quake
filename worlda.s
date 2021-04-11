@@ -102,8 +102,7 @@ Lhloop:
 	fmuls	4(%edx)
 	flds	pl_normal+8(%ebp,%ecx,4)
 	fmuls	8(%edx)
-	fxch	%st(1)
-	faddp	%st(0),%st(2)
+	faddp	%st(0),%st(1)
 	faddp	%st(0),%st(1)
 	fsubs	pl_dist(%ebp,%ecx,4)
 	jmp		Lsub
