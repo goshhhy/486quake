@@ -8,7 +8,7 @@ VERSION=$(BASEVERSION)
 ARCH=i386
 NOARCH=noarch
 
-SRC_DIR=$(shell pwd)
+SRC_DIR=$(shell pwd)/src
 BUILDDIR ?= $(shell pwd)/build
 
 OLEVEL=O3
@@ -56,13 +56,13 @@ CC_VERSION=$(shell $(CC) --version | head -n 1 | awk -F " " '{print $3}')
 BASE_CFLAGS=-Dstricmp=strcasecmp -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
 RELEASE_CFLAGS=$(BASE_CFLAGS) -s -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
 								-fno-unwind-tables -fno-asynchronous-unwind-tables -funroll-loops \
-								-fexpensive-optimizations -flto \
+								-fno-stack-protector -fexpensive-optimizations -flto \
 
 ifeq "$(OPROFILE)" "yes"
 BASE_CFLAGS+= -pg
 endif
 
-DEBUG_CFLAGS=$(BASE_CFLAGS) -g
+DEBUG_CFLAGS=$(BASE_CFLAGS)
 CFLAGS?=$(BASE_CFLAGS) $(RELEASE_CFLAGS)
 
 
@@ -200,6 +200,9 @@ ifneq "$(OASM)" "yes"
 	$(BUILDDIR)/486quake/d_vars.o \
 
 endif
+
+$(BUILDDIR)/$(BINNAME) : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
+	$(CC) $(RELEASE_CFLAGS) -o $@ $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS)
 
 $(BUILDDIR)/$(BINNAME).exe : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
 	$(CC) $(RELEASE_CFLAGS) -o $@ $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS)
