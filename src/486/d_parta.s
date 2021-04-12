@@ -56,13 +56,12 @@ C(D_DrawParticle):
 
 // transform point
 //	VectorSubtract (p->org, r_origin, local);
-	flds	C(r_origin)
-	fsubrs	pt_org(%edi)
-	flds	pt_org+4(%edi)
-	fsubs	C(r_origin)+4
 	flds	pt_org+8(%edi)
 	fsubs	C(r_origin)+8
-	fxch	%st(2)			// local[0] | local[1] | local[2]
+	flds	pt_org+4(%edi)
+	fsubs	C(r_origin)+4
+	flds	C(r_origin)
+	fsubrs	pt_org(%edi) // local[0] | local[1] | local[2]		
 
 //	transformed[2] = DotProduct(local, r_ppn);		
 	flds	C(r_ppn)		// r_ppn[0] | local[0] | local[1] | local[2]
@@ -72,8 +71,7 @@ C(D_DrawParticle):
 	flds	C(r_ppn)+8	// r_ppn[2] | dot1 | dot0 | local[0] |
 						//  local[1] | local[2]
 	fmul	%st(5),%st(0)	// dot2 | dot1 | dot0 | local[0] | local[1] | local[2]
-	fxch	%st(2)		// dot0 | dot1 | dot2 | local[0] | local[1] | local[2]
-	faddp	%st(0),%st(1) // dot0 + dot1 | dot2 | local[0] | local[1] |
+	faddp	%st(0),%st(1) // dot2 + dot1 | dot0 | local[0] | local[1] |
 						  //  local[2]
 	faddp	%st(0),%st(1) // z | local[0] | local[1] | local[2]
 	fld		%st(0)		// z | z | local[0] | local[1] |
@@ -97,14 +95,9 @@ C(D_DrawParticle):
 
 //	transformed[1] = DotProduct(local, r_pup);
 	fmul	%st(4),%st(0)	// dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
-	flds	C(r_pup)+8	// r_pup[2] | dot1 | dot0 | local[2] |
-						//  local[0] | local[1] | 1/z 
-	fmul	%st(3),%st(0)	// dot2 | dot1 | dot0 | local[2] | local[0] |
-						//  local[1] | 1/z 
-	fxch	%st(2)		// dot0 | dot1 | dot2 | local[2] | local[0] |
-						//  local[1] | 1/z 
-	faddp	%st(0),%st(1) // dot0 + dot1 | dot2 | local[2] | local[0] |
-						//  local[1] | 1/z 
+	flds	C(r_pup)+8	// r_pup[2] | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
+	fmul	%st(3),%st(0)	// dot2 | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
+	faddp	%st(0),%st(1) // dot2 + dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
 	faddp	%st(0),%st(1) // y | local[2] | local[0] | local[1] | 1/z 
 	fxch	%st(3)		// local[1] | local[2] | local[0] | y | 1/z 
 
@@ -114,17 +107,13 @@ C(D_DrawParticle):
 	fmuls	C(r_pright)	// dot0 | local[2] | dot1 | y | 1/z
 	fxch	%st(1)		// local[2] | dot0 | dot1 | y | 1/z
 	fmuls	C(r_pright)+8	// dot2 | dot0 | dot1 | y | 1/z
-	fxch	%st(2)		// dot1 | dot0 | dot2 | y | 1/z
-	faddp	%st(0),%st(1) // dot1 + dot0 | dot2 | y | 1/z
-
+	faddp	%st(0),%st(1) // dot2 + dot0 | dot1 | y | 1/z
 	faddp	%st(0),%st(1)	// x | y | 1/z
-	fxch	%st(1)			// y | x | 1/z
 
 // project the point
-	fmul	%st(2),%st(0)	// y/z | x | 1/z
-	fxch	%st(1)			// x | y/z | 1/z
-	fmul	%st(2),%st(0)	// x/z | y/z | 1/z
-	fxch	%st(1)			// y/z | x/z | 1/z
+	fmul	%st(2),%st(0)	// x/z | y | 1/z
+	fxch	%st(1)			// y | x/z | 1/z
+	fmul	%st(2),%st(0)	// y/z | x/z | 1/z
 	fsubrs	C(ycenter)		// v | x/z | 1/z
 	fxch	%st(1)			// x/z | v | 1/z
 	fadds	C(xcenter)		// u | v | 1/z
