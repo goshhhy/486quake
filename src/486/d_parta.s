@@ -41,6 +41,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 	.text
 
+.align 4
+// for terje's Fp->Int optimization
+.MAGIC:
+        .long   0x59800004  
+
 #define P	12+4
 
 	.align 4
@@ -74,26 +79,22 @@ C(D_DrawParticle):
 	faddp	%st(0),%st(1) // dot2 + dot1 | dot0 | local[0] | local[1] |
 						  //  local[2]
 	faddp	%st(0),%st(1) // z | local[0] | local[1] | local[2]
-	fld		%st(0)		// z | z | local[0] | local[1] |
-						//  local[2]
-	fdivrs	float_1		// 1/z | z | local[0] | local[1] | local[2]
-	fxch	%st(1)		// z | 1/z | local[0] | local[1] | local[2]
+	fld		%st(0)		// z | z | local[0] | local[1] | local[2]
 
 //	if (transformed[2] < PARTICLE_Z_CLIP)
 //		return;
-	fcomps	float_particle_z_clip	// 1/z | local[0] | local[1] | local[2]
-	fxch	%st(3)					// local[2] | local[0] | local[1] | 1/z
-
-	flds	C(r_pup)	// r_pup[0] | local[2] | local[0] | local[1] | 1/z
-	fmul	%st(2),%st(0)	// dot0 | local[2] | local[0] | local[1] | 1/z 
-	flds	C(r_pup)+4	// r_pup[1] | dot0 | local[2] | local[0] |
-						//  local[1] | 1/z 
-
+	fcomps	float_particle_z_clip		// z | local[0] | local[1] | local[2]
 	fnstsw	%ax
 	testb	$1,%ah
-	jnz		LPop6AndDone
+	jnz		LPop4AndDone
+
+	fdivrs	float_1						// 1/z | z | local[0] | local[1] | local[2]
+	fxch	%st(3)						// local[2] | local[0] | local[1] | 1/z
 
 //	transformed[1] = DotProduct(local, r_pup);
+	flds	C(r_pup)					// r_pup[0] | local[2] | local[0] | local[1] | 1/z
+	fmul	%st(2),%st(0)				// dot0 | local[2] | local[0] | local[1] | 1/z 
+	flds	C(r_pup)+4					// r_pup[1] | dot0 | local[2] | local[0] | local[1] | 1/z 
 	fmul	%st(4),%st(0)	// dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
 	flds	C(r_pup)+8	// r_pup[2] | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
 	fmul	%st(3),%st(0)	// dot2 | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
@@ -117,19 +118,26 @@ C(D_DrawParticle):
 	fsubrs	C(ycenter)		// v | x/z | 1/z
 	fxch	%st(1)			// x/z | v | 1/z
 	fadds	C(xcenter)		// u | v | 1/z
-// FIXME: preadjust xcenter and ycenter
-	fxch	%st(1)			// v | u | 1/z
-	fadds	float_point5	// v | u | 1/z
-	fxch	%st(1)			// u | v | 1/z
-	fadds	float_point5	// u | v | 1/z
-	fxch	%st(2)			// 1/z | v | u
-	fmuls	DP_32768		// 1/z * 0x8000 | v | u
-	fxch	%st(2)			// u | v | 1/z * 0x8000
 
-// FIXME: use Terje's fp->int trick here?
+// FIXME: preadjust xcenter and ycenter
+	fadds	float_point5	// u.5 | v | 1/z
+	fistpl	DP_u			// v | 1/z :: 28-34 cycles. SLOW!!!
+								// use terje's trick instead:
+	//fadds .MAGIC				// 8-20 cycles
+	//fstpl DP_u					// 7 cycles
+	//addl $-2147483648, DP_u		// 3 cycles
+								//total 18 - 30 cycles. Faster!!!
+
+	fadds	float_point5		// v.5 | 1/z
+	fistpl	DP_v			// 1/z
+								// terje's trick breaks this one??
+	//fadds .MAGIC			
+	//fstpl DP_v	
+	//addl $-2147483648, DP_v
+
+	fmuls	DP_32768		// 1/z * 0x8000
+
 // FIXME: check we're getting proper rounding here
-	fistpl	DP_u			// v | 1/z * 0x8000
-	fistpl	DP_v			// 1/z * 0x8000
 
 	movl	DP_u,%eax
 	movl	DP_v,%edx
@@ -157,8 +165,11 @@ C(D_DrawParticle):
 	jl		LPop1AndDone
 
 	flds	pt_color(%edi)	// color | 1/z * 0x8000
-// FIXME: use Terje's fast fp->int trick?
+// use Terje's fast fp->int trick
 	fistpl	DP_Color		// 1/z * 0x8000
+	//fadds .MAGIC			
+	//fstpl DP_Color	
+	//addl $-2147483648, DP_Color	
 
 	movl	C(d_viewbuffer),%ebx
 
@@ -171,6 +182,9 @@ C(D_DrawParticle):
 	movl	C(d_pzbuffer),%eax
 
 	fistpl	izi
+	//fadds .MAGIC			
+	//fstpl izi	
+	//addl $-2147483648, izi	
 
 	addl	%ebx,%edi
 	addl	%eax,%edx
@@ -456,6 +470,7 @@ LDone:
 LPop6AndDone:
 	fstp	%st(0)
 	fstp	%st(0)
+LPop4AndDone:
 	fstp	%st(0)
 	fstp	%st(0)
 	fstp	%st(0)
