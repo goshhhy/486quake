@@ -205,13 +205,10 @@ LSpanLoop:
 
 // finish up the s and t calcs
 	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
-
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fxch	%st(1)			// z*64k | s | 1/z | t/z | s/z
-	fmul	%st(3),%st(0)	// t | s | 1/z | t/z | s/z
-	fxch	%st(1)			// s | t | 1/z | t/z | s/z
-	fistpl	s				// 1/z | t | t/z | s/z
+	fistpl	s				// z*64k | 1/z | t/z | s/z
+	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
 	fildl	spancountminus1
@@ -239,13 +236,10 @@ LSpanLoop:
 LCleanup1:
 // finish up the s and t calcs
 	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
-
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fxch	%st(1)			// z*64k | s | 1/z | t/z | s/z
-	fmul	%st(3),%st(0)	// t | s | 1/z | t/z | s/z
-	fxch	%st(1)			// s | t | 1/z | t/z | s/z
-	fistpl	s				// 1/z | t | t/z | s/z
+	fistpl	s				// z*64k | 1/z | t/z | s/z
+	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 	jmp		LFDIVInFlight1
 
@@ -253,13 +247,10 @@ LCleanup1:
 LSetupNotLast1:
 // finish up the s and t calcs
 	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
-
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fxch	%st(1)			// z*64k | s | 1/z | t/z | s/z
-	fmul	%st(3),%st(0)	// t | s | 1/z | t/z | s/z
-	fxch	%st(1)			// s | t | 1/z | t/z | s/z
-	fistpl	s				// 1/z | t | t/z | s/z
+	fistpl	s				// z*64k | 1/z | t/z | s/z
+	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
 	fadds	zi16stepu
