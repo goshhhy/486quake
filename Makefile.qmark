@@ -32,16 +32,14 @@ else
     $(error unknown cpu type $(OCPU))
 endif
 
-BINNAME=$(OCPU)q$(OLEVEL)$(LTOCHAR)
+BINNAME=qmark$(OCPU)
 
 ifeq "$(OLTO)" "yes"
     LTOFLAGS=-flto
-    BINNAME:=$(BINNAME)l
 endif
 
 ifneq "$(OASM)" "yes"
     ID386=0
-    BINNAME:=$(BINNAME)c
 else
     ID386=1
 endif
@@ -161,11 +159,8 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	\
 	$(BUILDDIR)/486quake/dos_v2.o \
 	$(BUILDDIR)/486quake/cd_audio.o \
-	$(BUILDDIR)/486quake/sys_dos.o \
 	$(BUILDDIR)/486quake/in_dos.o \
-	$(BUILDDIR)/486quake/vid_dos.o \
-	$(BUILDDIR)/486quake/vid_vga.o \
-	$(BUILDDIR)/486quake/vid_ext.o \
+	$(BUILDDIR)/486quake/vid_null.o \
 	$(BUILDDIR)/486quake/vregset.o \
 	$(BUILDDIR)/486quake/snd_dma.o \
 	$(BUILDDIR)/486quake/snd_mem.o \
@@ -193,7 +188,10 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/worlda.o \
 	$(BUILDDIR)/486quake/r_aclipa.o \
 	$(BUILDDIR)/486quake/snd_mixa.o \
-	$(BUILDDIR)/486quake/sys_dosa.o
+	$(BUILDDIR)/486quake/sys_dosa.o \
+	$(BUILDDIR)/486quake/qm_fxch.o \
+	$(BUILDDIR)/486quake/qm_terje.o \
+	$(BUILDDIR)/486quake/qm_sys.o \
     
 ifneq "$(OASM)" "yes"
 486QUAKE_COBJS = \
@@ -431,6 +429,9 @@ $(BUILDDIR)/486quake/vid_vga.o:$(SRC_DIR)/vid_vga.c
 $(BUILDDIR)/486quake/vid_ext.o:$(SRC_DIR)/vid_ext.c
 	$(DO_O_CC)
 
+$(BUILDDIR)/486quake/vid_null.o:$(SRC_DIR)/vid_null.c
+	$(DO_O_CC)
+
 $(BUILDDIR)/486quake/vregset.o:$(SRC_DIR)/vregset.c
 	$(DO_O_CC)
 
@@ -456,6 +457,9 @@ $(BUILDDIR)/486quake/mplpc.o :$(SRC_DIR)/mplpc.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/dos_v2.o :  $(SRC_DIR)/dos_v2.c
+	$(DO_CC)
+
+$(BUILDDIR)/486quake/qm_sys.o :  $(SRC_DIR)/qmark/qm_sys.c
 	$(DO_CC)
 
 #####
@@ -515,6 +519,12 @@ $(BUILDDIR)/486quake/snd_mixa.o : $(SRC_DIR)/snd_mixa.s
 	$(DO_AS)
 
 $(BUILDDIR)/486quake/sys_dosa.o : $(SRC_DIR)/sys_dosa.s
+	$(DO_AS)
+
+$(BUILDDIR)/486quake/qm_fxch.o : $(SRC_DIR)/qmark/qm_fxch.s
+	$(DO_AS)
+
+$(BUILDDIR)/486quake/qm_terje.o : $(SRC_DIR)/qmark/qm_terje.s
 	$(DO_AS)
 
 #############################################################################
