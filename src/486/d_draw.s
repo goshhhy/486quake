@@ -127,40 +127,22 @@ LSpanLoop:
 	fld		%st(1)			// du | dv*d_sdivzstepv | du | dv
 	fmuls	C(d_sdivzstepu)	// du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
 	fld		%st(2)			// du | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_tdivzstepu)	// du*d_tdivzstepu | du*d_sdivzstepu |
-							//  dv*d_sdivzstepv | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu | du*d_tdivzstepu |
-							//  dv*d_sdivzstepv | du | dv
-	faddp	%st(0),%st(2)	// du*d_tdivzstepu |
-							//  du*d_sdivzstepu + dv*d_sdivzstepv | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  du*d_tdivzstepu | du | dv
-	fld		%st(3)			// dv | du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  du*d_tdivzstepu | du | dv
-	fmuls	C(d_tdivzstepv)	// dv*d_tdivzstepv |
-							//  du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  du*d_tdivzstepu | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  dv*d_tdivzstepv | du*d_tdivzstepu | du | dv
-	fadds	C(d_sdivzorigin)	// sdivz = d_sdivzorigin + dv*d_sdivzstepv +
-							//  du*d_sdivzstepu; stays in %st(2) at end
-	fxch	%st(4)			// dv | dv*d_tdivzstepv | du*d_tdivzstepu | du |
-							//  s/z
-	fmuls	C(d_zistepv)		// dv*d_zistepv | dv*d_tdivzstepv |
-							//  du*d_tdivzstepu | du | s/z
-	fxch	%st(1)			// dv*d_tdivzstepv |  dv*d_zistepv |
-							//  du*d_tdivzstepu | du | s/z
-	faddp	%st(0),%st(2)	// dv*d_zistepv |
-							//  dv*d_tdivzstepv + du*d_tdivzstepu | du | s/z
-	fxch	%st(2)			// du | dv*d_tdivzstepv + du*d_tdivzstepu |
-							//  dv*d_zistepv | s/z
-	fmuls	C(d_zistepu)		// du*d_zistepu |
-							//  dv*d_tdivzstepv + du*d_tdivzstepu |
-							//  dv*d_zistepv | s/z
-	fxch	%st(1)			// dv*d_tdivzstepv + du*d_tdivzstepu |
-							//  du*d_zistepu | dv*d_zistepv | s/z
-	fadds	C(d_tdivzorigin)	// tdivz = d_tdivzorigin + dv*d_tdivzstepv +
-							//  du*d_tdivzstepu; stays in %st(1) at end
+	fmuls	C(d_tdivzstepu)	// du*d_tdivzstepu | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
+	fxch	%st(1)			// du*d_sdivzstepu | du*d_tdivzstepu | dv*d_sdivzstepv | du | dv
+	faddp	%st(0),%st(2)	// du*d_tdivzstepu |du*d_sdivzstepu + dv*d_sdivzstepv | du | dv
+	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
+	fld		%st(3)			// dv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
+	fmuls	C(d_tdivzstepv)	// dv*d_tdivzstepv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
+	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | dv
+	fadds	C(d_sdivzorigin)	// sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu; stays in %st(2) at end
+	fxch	%st(4)			// dv | dv*d_tdivzstepv | du*d_tdivzstepu | du |  s/z
+	fmuls	C(d_zistepv)		// dv*d_zistepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | s/z
+	fxch	%st(1)			// dv*d_tdivzstepv |  dv*d_zistepv | du*d_tdivzstepu | du | s/z
+	faddp	%st(0),%st(2)	// dv*d_zistepv | dv*d_tdivzstepv + du*d_tdivzstepu | du | s/z
+	fxch	%st(2)			// du | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
+	fmuls	C(d_zistepu)		// du*d_zistepu | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
+	fxch	%st(1)			// dv*d_tdivzstepv + du*d_tdivzstepu | du*d_zistepu | dv*d_zistepv | s/z
+	fadds	C(d_tdivzorigin)	// tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu; stays in %st(1) at end
 	fxch	%st(2)			// dv*d_zistepv | du*d_zistepu | t/z | s/z
 	faddp	%st(0),%st(1)	// dv*d_zistepv + du*d_zistepu | t/z | s/z
 
@@ -200,14 +182,12 @@ LSpanLoop:
 	movl	%ecx,spancountminus1
 
 // finish up the s and t calcs
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 
+	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fxch	%st(1)			// z*64k | s | 1/z | t/z | s/z
-	fmul	%st(3),%st(0)	// t | s | 1/z | t/z | s/z
-	fxch	%st(1)			// s | t | 1/z | t/z | s/z
-	fistpl	s				// 1/z | t | t/z | s/z
+	fistpl	s				// z*64k | 1/z | t/z | s/z
+	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
 	fildl	spancountminus1
@@ -235,13 +215,10 @@ LSpanLoop:
 LCleanup1:
 // finish up the s and t calcs
 	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
-
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fxch	%st(1)			// z*64k | s | 1/z | t/z | s/z
-	fmul	%st(3),%st(0)	// t | s | 1/z | t/z | s/z
-	fxch	%st(1)			// s | t | 1/z | t/z | s/z
-	fistpl	s				// 1/z | t | t/z | s/z
+	fistpl	s				// z*64k | 1/z | t/z | s/z
+	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 	jmp		LFDIVInFlight1
 
@@ -249,13 +226,10 @@ LCleanup1:
 LSetupNotLast1:
 // finish up the s and t calcs
 	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
-
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fxch	%st(1)			// z*64k | s | 1/z | t/z | s/z
-	fmul	%st(3),%st(0)	// t | s | 1/z | t/z | s/z
-	fxch	%st(1)			// s | t | 1/z | t/z | s/z
-	fistpl	s				// 1/z | t | t/z | s/z
+	fistpl	s				// z*64k | 1/z | t/z | s/z
+	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
 	fadds	zi8stepu
