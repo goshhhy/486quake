@@ -712,20 +712,13 @@ LTransformAndProject:
 
 //	// transform and project
 //		VectorSubtract (world, modelorg, local);
-	flds	mv_position+0(%esi)
-	fsubs	C(modelorg)+0
+	flds	mv_position+8(%esi)
+	fsubs	C(modelorg)+8
 	flds	mv_position+4(%esi)
 	fsubs	C(modelorg)+4
-	flds	mv_position+8(%esi)	
-	fsubs	C(modelorg)+8
-	fxch	%st(2)				// local[0] | local[1] | local[2]
-
+	flds	mv_position+0(%esi)	
+	fsubs	C(modelorg)+0
 //		TransformVector (local, transformed);
-//	
-//		if (transformed[2] < NEAR_CLIP)
-//			transformed[2] = NEAR_CLIP;
-//	
-//		lzi0 = 1.0 / transformed[2];
 	fld		%st(0)				// local[0] | local[0] | local[1] | local[2]
 	fmuls	C(vpn)+0			// zm0 | local[0] | local[1] | local[2]
 	fld		%st(1)				// local[0] | zm0 | local[0] | local[1] |
@@ -763,6 +756,11 @@ LTransformAndProject:
 	faddp	%st(0),%st(3)		// zm4 | ym2 | xm4 | ym3
 	fxch	%st(1)				// ym2 | zm4 | xm4 | ym3
 	faddp	%st(0),%st(3)		// zm4 | xm4 | ym4
+
+//		if (transformed[2] < NEAR_CLIP)
+//			transformed[2] = NEAR_CLIP;
+//	
+//		lzi0 = 1.0 / transformed[2];
 
 	fcoms	Lfp_near_clip
 	fnstsw	%ax
