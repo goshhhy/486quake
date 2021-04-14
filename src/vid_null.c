@@ -22,14 +22,19 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "d_local.h"
 
-viddef_t	vid;				// global video state
+extern viddef_t	vid;				// global video state
 
 #define	BASEWIDTH	320
 #define	BASEHEIGHT	200
 
+int		VGA_width = BASEWIDTH, VGA_height = BASEHEIGHT, VGA_rowbytes = BASEWIDTH, VGA_bufferrowbytes = BASEWIDTH;
+
+
 byte	vid_buffer[BASEWIDTH*BASEHEIGHT];
 short	zbuffer[BASEWIDTH*BASEHEIGHT];
 byte	surfcache[256*1024];
+
+byte	*VGA_pagebase = vid_buffer;
 
 unsigned short	d_8to16table[256];
 unsigned	d_8to24table[256];
@@ -54,7 +59,7 @@ void	VID_Init (unsigned char *palette)
 	vid.rowbytes = vid.conrowbytes = BASEWIDTH;
 	
 	d_pzbuffer = zbuffer;
-	D_InitCaches (surfcache, sizeof(surfcache));
+	//D_InitCaches (surfcache, sizeof(surfcache));
 }
 
 void	VID_Shutdown (void)
