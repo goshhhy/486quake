@@ -85,10 +85,10 @@ C(D_DrawParticle):
 //		return;
 	fcomps	float_particle_z_clip		// z | local[0] | local[1] | local[2]
 	fnstsw	%ax
+	fdivrs	float_1						// 1/z | local[0] | local[1] | local[2]
 	testb	$1,%ah
 	jnz		LPop4AndDone
 
-	fdivrs	float_1						// 1/z | z | local[0] | local[1] | local[2]
 	fxch	%st(3)						// local[2] | local[0] | local[1] | 1/z
 
 //	transformed[1] = DotProduct(local, r_pup);
@@ -100,47 +100,37 @@ C(D_DrawParticle):
 	fmul	%st(3),%st(0)	// dot2 | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
 	faddp	%st(0),%st(1) // dot2 + dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
 	faddp	%st(0),%st(1) // y | local[2] | local[0] | local[1] | 1/z 
-	fxch	%st(3)		// local[1] | local[2] | local[0] | y | 1/z 
+
+// project and store y
+	fmul	%st(4),%st(0)	// y/z | local[2] | local[0] | local[1] | 1/z 
+	fsubrs	C(ycenter)		// v | local[2] | local[0] | local[1] | 1/z 
+	fadds	float_point5	// v.5 | local[2] | local[0] | local[1] | 1/z 
+	fistpl	DP_v			// local[2] | local[0] | local[1] | 1/z 
 
 //	transformed[0] = DotProduct(local, r_pright);
-	fmuls	C(r_pright)+4	// dot1 | local[2] | local[0] | y | 1/z
-	fxch	%st(2)		// local[0] | local[2] | dot1 | y | 1/z
-	fmuls	C(r_pright)	// dot0 | local[2] | dot1 | y | 1/z
-	fxch	%st(1)		// local[2] | dot0 | dot1 | y | 1/z
-	fmuls	C(r_pright)+8	// dot2 | dot0 | dot1 | y | 1/z
-	faddp	%st(0),%st(1) // dot2 + dot0 | dot1 | y | 1/z
-	faddp	%st(0),%st(1)	// x | y | 1/z
 
-// project the point
-	fmul	%st(2),%st(0)	// x/z | y | 1/z
-	fxch	%st(1)			// y | x/z | 1/z
-	fmul	%st(2),%st(0)	// y/z | x/z | 1/z
-	fsubrs	C(ycenter)		// v | x/z | 1/z
-	fxch	%st(1)			// x/z | v | 1/z
-	fadds	C(xcenter)		// u | v | 1/z
+	fmuls	C(r_pright)+8			// dot2 | local[0] | local[1] | 1/z
 
-// FIXME: preadjust xcenter and ycenter
-	fadds	float_point5	// u.5 | v | 1/z
-	fistpl	DP_u			// v | 1/z :: 28-34 cycles. SLOW!!!
-								// use terje's trick instead:
-	//fadds .MAGIC				// 8-20 cycles
-	//fstpl DP_u					// 7 cycles
-	//addl $-2147483648, DP_u		// 3 cycles
-								//total 18 - 30 cycles. Faster!!!
+//  have the cpu load v while fpu does the fmul 
+	movl	DP_v,%edx
 
-	fadds	float_point5		// v.5 | 1/z
-	fistpl	DP_v			// 1/z
-								// terje's trick breaks this one??
-	//fadds .MAGIC			
-	//fstpl DP_v	
-	//addl $-2147483648, DP_v
+	fxch	%st(2)					// local[1] | local[0] | dot2 | 1/z
+	fmuls	C(r_pright)+4			// dot1 | local[0] | dot2 | 1/z
+	fxch	%st(1)					// local[0] | dot1 | dot2 | 1/z
+	fmuls	C(r_pright)				// dot0 | dot1 | dot2 | 1/z
+	faddp	%st(0),%st(1) 			// dot0 + dot1 | dot2 | 1/z
+	faddp	%st(0),%st(1)			// x | 1/z
+
+// project and store the point
+	fmul	%st(1),%st(0)	// x/z | 1/z
+	fadds	C(xcenter)		// u | 1/z
+	fadds	float_point5	// u.5 | 1/z
+	fistpl	DP_u			// 1/z :: 28-34 cycles
 
 	fmuls	DP_32768		// 1/z * 0x8000
 
-// FIXME: check we're getting proper rounding here
-
+//  have the cpu load u while fpu does the fmul 
 	movl	DP_u,%eax
-	movl	DP_v,%edx
 
 // if ((v > d_vrectbottom_particle) || 
 // 	(u > d_vrectright_particle) ||
@@ -165,12 +155,8 @@ C(D_DrawParticle):
 	jl		LPop1AndDone
 
 	flds	pt_color(%edi)	// color | 1/z * 0x8000
-// use Terje's fast fp->int trick
 	fistpl	DP_Color		// 1/z * 0x8000
-	//fadds .MAGIC			
-	//fstpl DP_Color	
-	//addl $-2147483648, DP_Color	
-
+	
 	movl	C(d_viewbuffer),%ebx
 
 	addl	%eax,%ebx
