@@ -148,8 +148,7 @@ LSpanLoop:
 
 	flds	fp_64k			// fp_64k | dv*d_zistepv + du*d_zistepu | t/z | s/z
 	fxch	%st(1)			// dv*d_zistepv + du*d_zistepu | fp_64k | t/z | s/z
-	fadds	C(d_ziorigin)		// zi = d_ziorigin + dv*d_zistepv +
-							//  du*d_zistepu; stays in %st(0) at end
+	fadds	C(d_ziorigin)	// zi = d_ziorigin + dv*d_zistepv + du*d_zistepu; stays in %st(0) at end
 							// 1/z | fp_64k | t/z | s/z
 //
 // calculate and clamp s & t
@@ -232,12 +231,12 @@ LSetupNotLast1:
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	fadds	zi8stepu
-	fxch	%st(2)
-	fadds	sdivz8stepu
-	fxch	%st(2)
-	flds	tdivz8stepu
-	faddp	%st(0),%st(2)
+	fadds	zi8stepu		// 1/z adj | t/z | s/z adj
+	fxch	%st(2)			// s/z | t/z | 1/z adj
+	fadds	sdivz8stepu		// s/z adj | t/z | 1/z adj
+	fxch	%st(2)			// 1/z adj | t/z | s/z adj
+	flds	tdivz8stepu		// tdivz | 1/z adj | t/z | s/z adj
+	faddp	%st(0),%st(2)	// t/z adj | 1/z adj | s/z adj
 	flds	fp_64k
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
@@ -749,14 +748,14 @@ LClamp:
 	movl	$0x40000000,%edx
 	xorl	%ebx,%ebx
 	fstp	%st(0)
-	jmp		LZDraw
+	jmp		C(LZDraw)
 
 // z-clamp on a negative gradient span
 LClampNeg:
 	movl	$0x40000000,%edx
 	xorl	%ebx,%ebx
 	fstp	%st(0)
-	jmp		LZDrawNeg
+	jmp		C(LZDrawNeg)
 
 
 #define pzspans	4+16
@@ -768,39 +767,45 @@ C(D_DrawZSpans):
 	pushl	%esi				// preserve register variables
 	pushl	%ebx
 
-	flds	C(d_zistepu)
+	flds	C(d_zistepu)				// dv
 	movl	C(d_zistepu),%eax
 	movl	pzspans(%esp),%esi
 	testl	%eax,%eax
 	jz		LFNegSpan
 
-	fmuls	Float2ToThe31nd
+	fmuls	Float2ToThe31nd				// izistep
 	fistpl	izistep		// note: we are relying on FP exceptions being turned
 						// off here to avoid range problems
 	movl	izistep,%ebx	// remains loaded for all spans
 
-LFSpanLoop:
+.globl C(LFSpanLoop)
+C(LFSpanLoop):
 // set up the initial 1/z value
-	fildl	espan_t_v(%esi)
-	fildl	espan_t_u(%esi)
-	movl	espan_t_v(%esi),%ecx
-	movl	C(d_pzbuffer),%edi
-	fmuls	C(d_zistepu)
-	fxch	%st(1)
-	fmuls	C(d_zistepv)
-	fxch	%st(1)
-	fadds	C(d_ziorigin)
-	imull	C(d_zrowbytes),%ecx
-	faddp	%st(0),%st(1)
-
 // clamp if z is nearer than 2 (1/z > 0.5)
+
+	fildl	espan_t_v(%esi)				// dv																	:: 		9-12 cycles, 7.8 (2-8) concurrent
+		movl	espan_t_v(%esi),%ecx	//																		:: 		1 cycle (concurrent)
+		movl	C(d_pzbuffer),%edi		//																		:: 		1 cycle (concurrent)
+
+	fmuls	C(d_zistepv)				// dv * zistepv		 													::		11 cycles, 8 concurrent
+		imull	C(d_zrowbytes),%ecx		//																		:: 		IU 13-42 cycles (concurrent for 8)
+
+	fildl	espan_t_u(%esi)				// du | dv * zistepv													:: 		9-12 cycles, 7.8 (2-8) concurrent
+		addl	%ecx,%edi				//																		::		1 cycle (concurrent)
+		movl	espan_t_u(%esi),%edx	//																		::      1 cycle (concurrent)
+
+	fmuls	C(d_zistepu)				// du * zistepu | dv * zistepv											::		11 cycles, 8 concurrent
+		addl	%edx,%edx				// word count															:: 		1 cycle (concurrent)
+		movl	espan_t_count(%esi),%ecx //																		::		1 cycle (concurrent)
+		addl	%edx,%edi				// pdest = &pdestspan[scans->u];										::		1 cycle (concurrent)
+
+	fadds	C(d_ziorigin)				// (du * zistepu) + ziorigin | dv * zistepv								:: 		8-20 cycles, ~7 concurrent
+
+	faddp	%st(0),%st(1)				// zi																	:: 		8-20 cycles
+		pushl	%esi					// preserve spans pointer												::		1 cycle (concurrent)
+
+// do the clamp test
 	fcoms	float_point5
-	addl	%ecx,%edi
-	movl	espan_t_u(%esi),%edx
-	addl	%edx,%edx				// word count
-	movl	espan_t_count(%esi),%ecx
-	addl	%edx,%edi				// pdest = &pdestspan[scans->u];
-	pushl	%esi		// preserve spans pointer
 	fnstsw	%ax
 	testb	$0x45,%ah
 	jz		LClamp
@@ -817,7 +822,8 @@ LFSpanLoop:
 // %edx = izi
 // %edi = pdest
 
-LZDraw:
+.globl C(LZDraw)
+C(LZDraw):
 
 // do a single pixel up front, if necessary to dword align the destination
 	testl	$2,%edi
@@ -884,7 +890,7 @@ LFLast:
 LFSpanDone:
 	movl	espan_t_pnext(%esi),%esi
 	testl	%esi,%esi
-	jnz		LFSpanLoop
+	jnz		C(LFSpanLoop)
 
 	jmp		LFDone
 
@@ -894,28 +900,34 @@ LFNegSpan:
 						// off here to avoid range problems
 	movl	izistep,%ebx	// remains loaded for all spans
 
-LFNegSpanLoop:
+.globl C(LFNegSpanLoop)
+C(LFNegSpanLoop):
 // set up the initial 1/z value
-	fildl	espan_t_v(%esi)
-	fildl	espan_t_u(%esi)
-	movl	espan_t_v(%esi),%ecx
-	movl	C(d_pzbuffer),%edi
-	fmuls	C(d_zistepu)
-	fxch	%st(1)
-	fmuls	C(d_zistepv)
-	fxch	%st(1)
-	fadds	C(d_ziorigin)
-	imull	C(d_zrowbytes),%ecx
-	faddp	%st(0),%st(1)
-
 // clamp if z is nearer than 2 (1/z > 0.5)
+
+	fildl	espan_t_v(%esi)				// dv																	:: 		9-12 cycles, 7.8 (2-8) concurrent
+		movl	espan_t_v(%esi),%ecx	//																		:: 		1 cycle (concurrent)
+		movl	C(d_pzbuffer),%edi		//																		:: 		1 cycle (concurrent)
+
+	fmuls	C(d_zistepv)				// dv * zistepv		 													::		11 cycles, 8 concurrent
+		imull	C(d_zrowbytes),%ecx		//																		:: 		IU 13-42 cycles (concurrent for 8)
+
+	fildl	espan_t_u(%esi)				// du | dv * zistepv													:: 		9-12 cycles, 7.8 (2-8) concurrent
+		addl	%ecx,%edi				//																		::		1 cycle (concurrent)
+		movl	espan_t_u(%esi),%edx	//																		::      1 cycle (concurrent)
+
+	fmuls	C(d_zistepu)				// du * zistepu | dv * zistepv											::		11 cycles, 8 concurrent
+		addl	%edx,%edx				// word count															:: 		1 cycle (concurrent)
+		movl	espan_t_count(%esi),%ecx //																		::		1 cycle (concurrent)
+		addl	%edx,%edi				// pdest = &pdestspan[scans->u];										::		1 cycle (concurrent)
+
+	fadds	C(d_ziorigin)				// (du * zistepu) + ziorigin | dv * zistepv								:: 		8-20 cycles, ~7 concurrent
+
+	faddp	%st(0),%st(1)				// zi																	:: 		8-20 cycles
+		pushl	%esi					// preserve spans pointer												::		1 cycle (concurrent)
+
+// do the clamp test
 	fcoms	float_point5
-	addl	%ecx,%edi
-	movl	espan_t_u(%esi),%edx
-	addl	%edx,%edx				// word count
-	movl	espan_t_count(%esi),%ecx
-	addl	%edx,%edi				// pdest = &pdestspan[scans->u];
-	pushl	%esi		// preserve spans pointer
 	fnstsw	%ax
 	testb	$0x45,%ah
 	jz		LClampNeg
@@ -932,7 +944,8 @@ LFNegSpanLoop:
 // %edx = izi
 // %edi = pdest
 
-LZDrawNeg:
+.globl C(LZDrawNeg)
+C(LZDrawNeg):
 
 // do a single pixel up front, if necessary to dword align the destination
 	testl	$2,%edi
@@ -999,7 +1012,7 @@ LFNegLast:
 LFNegSpanDone:
 	movl	espan_t_pnext(%esi),%esi
 	testl	%esi,%esi
-	jnz		LFNegSpanLoop
+	jnz		C(LFNegSpanLoop)
 
 LFDone:
 	popl	%ebx				// restore register variables
