@@ -402,22 +402,18 @@ LSetUp1:
 	decl	%ecx
 	jz		LFDIVInFlight2	// if only one pixel, no need to start an FDIV
 	movl	%ecx,spancountminus1
-	fildl	spancountminus1
-
-	flds	C(d_zistepu)		// C(d_zistepu) | spancountminus1
-	fmul	%st(1),%st(0)	// C(d_zistepu)*scm1 | scm1
-	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | C(d_zistepu)*scm1 | scm1
-	fmul	%st(2),%st(0)	// C(d_tdivzstepu)*scm1 | C(d_zistepu)*scm1 | scm1
-	fxch	%st(1)			// C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1 | scm1
-	faddp	%st(0),%st(3)	// C(d_tdivzstepu)*scm1 | scm1
-	fxch	%st(1)			// scm1 | C(d_tdivzstepu)*scm1
-	fmuls	C(d_sdivzstepu)	// C(d_sdivzstepu)*scm1 | C(d_tdivzstepu)*scm1
-	fxch	%st(1)			// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
+	
+	flds	C(d_sdivzstepu)	// C(d_sdivzstepu)
+	fmuls	spancountminus1	// C(d_sdivzstepu)*scm1
+	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | C(d_sdivzstepu)*scm1
+	fmuls	spancountminus1	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1 
+	flds	C(d_zistepu)	// C(d_zistepu) | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
+	fmuls	spancountminus1 // C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
+	faddp	%st(0),%st(3)	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
 	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1
-	flds	fp_64k			// 64k | C(d_sdivzstepu)*scm1
-	fxch	%st(1)			// C(d_sdivzstepu)*scm1 | 64k
-	faddp	%st(0),%st(4)	// 64k
+	faddp	%st(0),%st(3)
 
+	flds	fp_64k
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
 	jmp		LFDIVInFlight2
