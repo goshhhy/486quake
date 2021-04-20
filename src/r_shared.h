@@ -66,7 +66,7 @@ extern	entity_t		*currententity;
 #define	MINEDGES			NUMSTACKEDGES
 #define NUMSTACKSURFACES	800
 #define MINSURFACES			NUMSTACKSURFACES
-#define	MAXSPANS			3000
+#define	MAXSPANS			12000
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct espan_s
