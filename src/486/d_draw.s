@@ -285,13 +285,14 @@ LNotLastSegment:
 
 // pick up after the FDIV that was left in flight previously
 
-	fld		%st(0)			// duplicate it
+	fld		%st(0)			// duplicate the z*64k
 	fmul	%st(4),%st(0)	// s = s/z * z
-	fxch	%st(1)
-	fmul	%st(3),%st(0)	// t = t/z * z
-	fxch	%st(1)
 	fistpl	snext
+	fmul	%st(2),%st(0)	// t = t/z * z
 	fistpl	tnext
+
+//	TODO: any room for IU/FPU overlap?
+
 	movl	snext,%eax
 	movl	tnext,%edx
 
