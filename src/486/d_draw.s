@@ -149,6 +149,7 @@ LSpanLoop:
 	flds	fp_64k			// fp_64k | dv*d_zistepv + du*d_zistepu | t/z | s/z
 	fxch	%st(1)			// dv*d_zistepv + du*d_zistepu | fp_64k | t/z | s/z
 	fadds	C(d_ziorigin)	// zi = d_ziorigin + dv*d_zistepv + du*d_zistepu; stays in %st(0) at end
+
 							// 1/z | fp_64k | t/z | s/z
 //
 // calculate and clamp s & t
@@ -189,20 +190,13 @@ LSpanLoop:
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	fildl	spancountminus1
-
-	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | spancountminus1
-	flds	C(d_zistepu)		// C(d_zistepu) | C(d_tdivzstepu) | spancountminus1
-	fmul	%st(2),%st(0)	// C(d_zistepu)*scm1 | C(d_tdivzstepu) | scm1
-	fxch	%st(1)			// C(d_tdivzstepu) | C(d_zistepu)*scm1 | scm1
-	fmul	%st(2),%st(0)	// C(d_tdivzstepu)*scm1 | C(d_zistepu)*scm1 | scm1
-	fxch	%st(2)			// scm1 | C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1
-	fmuls	C(d_sdivzstepu)	// C(d_sdivzstepu)*scm1 | C(d_zistepu)*scm1 |
-							//  C(d_tdivzstepu)*scm1
-	fxch	%st(1)			// C(d_zistepu)*scm1 | C(d_sdivzstepu)*scm1 |
-							//  C(d_tdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1 | C(d_tdivzstepu)*scm1
-	fxch	%st(1)			// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
+	flds	C(d_sdivzstepu)	// C(d_sdivzstepu)
+	fmuls	spancountminus1	// C(d_sdivzstepu)*scm1
+	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | C(d_sdivzstepu)*scm1
+	fmuls	spancountminus1	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1 
+	flds	C(d_zistepu)	// C(d_zistepu) | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
+	fmuls	spancountminus1 // C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
+	faddp	%st(0),%st(3)	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
 	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1
 	faddp	%st(0),%st(3)
 
