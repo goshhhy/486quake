@@ -11,6 +11,8 @@ NOARCH=noarch
 SRC_DIR=$(shell pwd)/src
 BUILDDIR ?= $(shell pwd)/build
 
+REVISION=2
+
 OLEVEL=O3
 OCPU=486
 OLTO=yes
@@ -21,7 +23,7 @@ ifeq "$(OCPU)" "386"
     OTUNE=i386
 else ifeq "$(OCPU)" "486"
     OARCH=i486
-    OTUNE=pentium
+    OTUNE=i486
 else ifeq "$(OCPU)" "586"
     OARCH=pentium
     OTUNE=pentium
@@ -53,7 +55,7 @@ CC=i586-pc-msdosdjgpp-gcc
 
 CC_VERSION=$(shell $(CC) --version | head -n 1 | awk -F " " '{print $3}')
 
-BASE_CFLAGS=-Dstricmp=strcasecmp -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
+BASE_CFLAGS=-Dstricmp=strcasecmp -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
 RELEASE_CFLAGS=$(BASE_CFLAGS) -s -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
 								-fno-unwind-tables -fno-asynchronous-unwind-tables -funroll-loops \
 								-fno-stack-protector -fexpensive-optimizations $(LTOFLAGS)\
