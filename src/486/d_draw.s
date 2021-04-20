@@ -225,12 +225,11 @@ LSetupNotLast1:
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	fadds	zi8stepu		// 1/z adj | t/z | s/z adj
-	fxch	%st(2)			// s/z | t/z | 1/z adj
-	fadds	sdivz8stepu		// s/z adj | t/z | 1/z adj
-	fxch	%st(2)			// 1/z adj | t/z | s/z adj
+	fadds	zi8stepu		// 1/z adj | t/z | s/z
+	flds	sdivz8stepu		// sdivz | 1/z adj | t/z | s/z
+	faddp	%st(0),%st(3)	// 1/z adj | t/z | s/z adj
 	flds	tdivz8stepu		// tdivz | 1/z adj | t/z | s/z adj
-	faddp	%st(0),%st(2)	// t/z adj | 1/z adj | s/z adj
+	faddp	%st(0),%st(2)	// 1/z adj | t/z adj | s/z adj
 	flds	fp_64k
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
@@ -420,12 +419,11 @@ LSetUp1:
 
 	.align	4
 LSetupNotLast2:
-	fadds	zi8stepu
-	fxch	%st(2)
-	fadds	sdivz8stepu
-	fxch	%st(2)
-	flds	tdivz8stepu
-	faddp	%st(0),%st(2)
+	fadds	zi8stepu		// 1/z adj | t/z | s/z
+	flds	sdivz8stepu		// sdivz | 1/z adj | t/z | s/z
+	faddp	%st(0),%st(3)	// 1/z adj | t/z | s/z adj
+	flds	tdivz8stepu		// tdivz | 1/z adj | t/z | s/z adj
+	faddp	%st(0),%st(2)	// 1/z adj | t/z adj | s/z adj
 	flds	fp_64k
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
@@ -486,14 +484,13 @@ LLastSegment:
 
 // pick up after the FDIV that was left in flight previously
 
-
-	fld		%st(0)			// duplicate it
+	fld		%st(0)			// duplicate the z*64k
 	fmul	%st(4),%st(0)	// s = s/z * z
-	fxch	%st(1)
-	fmul	%st(3),%st(0)	// t = t/z * z
-	fxch	%st(1)
 	fistpl	snext
+	fmul	%st(2),%st(0)	// t = t/z * z
 	fistpl	tnext
+
+//	TODO: IU/FPU overlap?
 
 	movb	(%esi),%al		// load first texel in segment
 	movl	C(tadjust),%ebx
