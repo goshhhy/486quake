@@ -168,15 +168,14 @@ LSpanLoop:
 	fxch	%st(2)			// dv*d_zistepv | du*d_zistepu | t/z | s/z
 	faddp	%st(0),%st(1)	// dv*d_zistepv + du*d_zistepu | t/z | s/z
 
-	flds	fp_64k			// fp_64k | dv*d_zistepv + du*d_zistepu | t/z | s/z
-	fxch	%st(1)			// dv*d_zistepv + du*d_zistepu | fp_64k | t/z | s/z
 	fadds	C(d_ziorigin)		// zi = d_ziorigin + dv*d_zistepv +
 							//  du*d_zistepu; stays in %st(0) at end
-							// 1/z | fp_64k | t/z | s/z
+
+	flds	fp_64k			// fp_64k | 1/z | t/z | s/z
 //
 // calculate and clamp s & t
 //
-	fdivr	%st(0),%st(1)	// 1/z | z*64k | t/z | s/z
+	fdiv	%st(1),%st(0)	// 1/z | z*64k | t/z | s/z
 
 //
 // point %edi to the first pixel in the span
@@ -204,7 +203,6 @@ LSpanLoop:
 	movl	%ecx,spancountminus1
 
 // finish up the s and t calcs
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
@@ -213,29 +211,21 @@ LSpanLoop:
 
 	fildl	spancountminus1
 
-	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | spancountminus1
-	flds	C(d_zistepu)		// C(d_zistepu) | C(d_tdivzstepu) | spancountminus1
-	fmul	%st(2),%st(0)	// C(d_zistepu)*scm1 | C(d_tdivzstepu) | scm1
-	fxch	%st(1)			// C(d_tdivzstepu) | C(d_zistepu)*scm1 | scm1
-	fmul	%st(2),%st(0)	// C(d_tdivzstepu)*scm1 | C(d_zistepu)*scm1 | scm1
-	fxch	%st(2)			// scm1 | C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1
-	fmuls	C(d_sdivzstepu)	// C(d_sdivzstepu)*scm1 | C(d_zistepu)*scm1 |
-							//  C(d_tdivzstepu)*scm1
-	fxch	%st(1)			// C(d_zistepu)*scm1 | C(d_sdivzstepu)*scm1 |
-							//  C(d_tdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1 | C(d_tdivzstepu)*scm1
-	fxch	%st(1)			// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)
-
-	flds	fp_64k
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z
+	fmul	%st(1),%st(0)		// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z
+	fmul	%st(1),%st(0)		// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z	
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z adj
+	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
 	jmp		LFDIVInFlight1
 
 LCleanup1:
 // finish up the s and t calcs
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
@@ -246,20 +236,18 @@ LCleanup1:
 	.align	4
 LSetupNotLast1:
 // finish up the s and t calcs
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	fadds	zi16stepu
-	fxch	%st(2)
-	fadds	sdivz16stepu
-	fxch	%st(2)
-	flds	tdivz16stepu
-	faddp	%st(0),%st(2)
-	flds	fp_64k
+	fadds	zi16stepu		// 1/z adj | t/z | s/z
+	flds	sdivz16stepu	// sdivz | 1/z adj | t/z | s/z
+	faddp	%st(0),%st(3)			// 1/z adj | t/z | s/z adj
+	flds	tdivz16stepu	// tdivz | 1/z adj | t/z | s/z adj
+	faddp	%st(0),%st(2)	// 1/z adj | t/z adj | s/z adj
+	flds	fp_64k			// fp_64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
 							//  overlap
@@ -313,13 +301,12 @@ LNotLastSegment:
 
 // pick up after the FDIV that was left in flight previously
 
-	fld		%st(0)			// duplicate it
+	fld		%st(0)			// duplicate the z*64k
 	fmul	%st(4),%st(0)	// s = s/z * z
-	fxch	%st(1)
-	fmul	%st(3),%st(0)	// t = t/z * z
-	fxch	%st(1)
 	fistpl	snext
+	fmul	%st(2),%st(0)	// t = t/z * z
 	fistpl	tnext
+
 	movl	snext,%eax
 	movl	tnext,%edx
 
@@ -457,35 +444,30 @@ LSetUp1:
 	decl	%ecx
 	jz		LFDIVInFlight2	// if only one pixel, no need to start an FDIV
 	movl	%ecx,spancountminus1
+
 	fildl	spancountminus1
 
-	flds	C(d_zistepu)		// C(d_zistepu) | spancountminus1
-	fmul	%st(1),%st(0)	// C(d_zistepu)*scm1 | scm1
-	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | C(d_zistepu)*scm1 | scm1
-	fmul	%st(2),%st(0)	// C(d_tdivzstepu)*scm1 | C(d_zistepu)*scm1 | scm1
-	fxch	%st(1)			// C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1 | scm1
-	faddp	%st(0),%st(3)	// C(d_tdivzstepu)*scm1 | scm1
-	fxch	%st(1)			// scm1 | C(d_tdivzstepu)*scm1
-	fmuls	C(d_sdivzstepu)	// C(d_sdivzstepu)*scm1 | C(d_tdivzstepu)*scm1
-	fxch	%st(1)			// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1
-	flds	fp_64k			// 64k | C(d_sdivzstepu)*scm1
-	fxch	%st(1)			// C(d_sdivzstepu)*scm1 | 64k
-	faddp	%st(0),%st(4)	// 64k
-
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z
+	fmul	%st(1),%st(0)		// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z
+	fmul	%st(1),%st(0)		// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z	
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z adj
+	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
 	jmp		LFDIVInFlight2
 
 	.align	4
 LSetupNotLast2:
-	fadds	zi16stepu
-	fxch	%st(2)
-	fadds	sdivz16stepu
-	fxch	%st(2)
-	flds	tdivz16stepu
-	faddp	%st(0),%st(2)
-	flds	fp_64k
+	fadds	zi16stepu		// 1/z adj | t/z | s/z
+	flds	sdivz16stepu	// sdivz | 1/z adj | t/z | s/z
+	faddp	%st(0),%st(3)			// 1/z adj | t/z | s/z adj
+	flds	tdivz16stepu	// tdivz | 1/z adj | t/z | s/z adj
+	faddp	%st(0),%st(2)	// 1/z adj | t/z adj | s/z adj
+	flds	fp_64k			// fp_64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
 							//  overlap
@@ -573,13 +555,10 @@ LLastSegment:
 
 // pick up after the FDIV that was left in flight previously
 
-
-	fld		%st(0)			// duplicate it
+	fld		%st(0)			// duplicate the z*64k
 	fmul	%st(4),%st(0)	// s = s/z * z
-	fxch	%st(1)
-	fmul	%st(3),%st(0)	// t = t/z * z
-	fxch	%st(1)
 	fistpl	snext
+	fmul	%st(2),%st(0)	// t = t/z * z
 	fistpl	tnext
 
 	movb	(%esi),%al		// load first texel in segment
