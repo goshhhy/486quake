@@ -189,23 +189,24 @@ LSpanLoop:
 	movl	%ecx,spancountminus1
 
 // finish up the s and t calcs
-
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	fildl	spancountminus1		//														::	9-12
-	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z				::	3
-	fmul	%st(1),%st(0)		// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z			::	16
-	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z							:: 	8-20
-	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z			::	3
-	fmul	%st(1),%st(0)		// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z	:: 	16
-	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z						:: 	8-20
-	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z		::	11
-	faddp	%st(0),%st(3)		// 1/z adj | t/z adj | s/z adj							::	8-20
-								//														:: TOTAL 82-121
+	fildl	spancountminus1		//														:: 9-12
+	fsts	ftmp				//														:: 7
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z				:: 3
+	fmuls	ftmp				// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z			:: 11
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z							:: 8-20
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z			:: 3
+	fmuls	ftmp				// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z	:: 11
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z						:: 8-20
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z		:: 11
+	faddp	%st(0),%st(3)		// 1/z adj | t/z adj | s/z adj							:: 8-20
+								//														:: TOTAL 79-118
+						
 	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
@@ -407,15 +408,17 @@ LSetUp1:
 	jz		LFDIVInFlight2	// if only one pixel, no need to start an FDIV
 	movl	%ecx,spancountminus1
 	
-	flds	C(d_sdivzstepu)	// C(d_sdivzstepu)
-	fmuls	spancountminus1	// C(d_sdivzstepu)*scm1
-	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | C(d_sdivzstepu)*scm1
-	fmuls	spancountminus1	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1 
-	flds	C(d_zistepu)	// C(d_zistepu) | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	fmuls	spancountminus1 // C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)
+	fildl	spancountminus1		//														:: 9-12
+	fsts	ftmp				//														:: 7
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z				:: 3
+	fmuls	ftmp				// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z			:: 11
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z							:: 8-20
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z			:: 3
+	fmuls	ftmp				// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z	:: 11
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z						:: 8-20
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z		:: 11
+	faddp	%st(0),%st(3)		// 1/z adj | t/z adj | s/z adj							:: 8-20
+								//														:: TOTAL 79-118
 
 	flds	fp_64k
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
