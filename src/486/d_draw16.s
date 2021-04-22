@@ -270,35 +270,30 @@ LClampReentry1:
 // not the last segment; do full 16-wide segment
 //
 LNotLastSegment:
-
 //
 // advance s/z, t/z, and 1/z, and calculate s & t at end of span and steps to
 // get there
 //
 
 // pick up after the FDIV that was left in flight previously
-
 	fld		%st(0)			// duplicate the z*64k
 	fmul	%st(4),%st(0)	// s = s/z * z
+		// while that fmul happens (16 cycles, 13 cycle concurrency):
+		movb	(%esi),%bl	// get first source texel
+		subl	$16,%ecx		// count off this segments' pixels
+		movl	C(sadjust),%ebp
+		movl	%ecx,counttemp	// remember count of remaining pixels
+		movl	C(tadjust),%ecx
+		movb	%bl,(%edi)	// store first dest pixel
 	fistpl	snext
 	fmul	%st(2),%st(0)	// t = t/z * z
+		movl	snext,%eax
+		addl	%eax,%ebp
+		movl	C(bbextents),%eax
 	fistpl	tnext
-
-	movl	snext,%eax
+	
 	movl	tnext,%edx
-
-	movb	(%esi),%bl	// get first source texel
-	subl	$16,%ecx		// count off this segments' pixels
-	movl	C(sadjust),%ebp
-	movl	%ecx,counttemp	// remember count of remaining pixels
-
-	movl	C(tadjust),%ecx
-	movb	%bl,(%edi)	// store first dest pixel
-
-	addl	%eax,%ebp
 	addl	%edx,%ecx
-
-	movl	C(bbextents),%eax
 	movl	C(bbextentt),%edx
 
 	cmpl	$4096,%ebp
