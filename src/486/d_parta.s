@@ -168,9 +168,6 @@ C(D_DrawParticle):
 	movl	C(d_pzbuffer),%eax
 
 	fistpl	izi
-	//fadds .MAGIC			
-	//fstpl izi	
-	//addl $-2147483648, izi	
 
 	addl	%ebx,%edi
 	addl	%eax,%edx

@@ -136,7 +136,7 @@ cvar_t	r_maxedges = {"r_maxedges", "0"};
 cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
-cvar_t	r_maxspans = {"r_maxspans", "6000"};
+cvar_t	r_maxspans = {"r_maxspans", "5000"};
 
 extern cvar_t	scr_fov;
 

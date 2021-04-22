@@ -807,17 +807,29 @@ C(D_DrawZSpans):
 
 LFSpanLoop:
 // set up the initial 1/z value
-	fildl	espan_t_v(%esi)
-	fildl	espan_t_u(%esi)
-	movl	espan_t_v(%esi),%ecx
-	movl	C(d_pzbuffer),%edi
-	fmuls	C(d_zistepu)
-	fxch	%st(1)
-	fmuls	C(d_zistepv)
-	fxch	%st(1)
-	fadds	C(d_ziorigin)
-	imull	C(d_zrowbytes),%ecx
-	faddp	%st(0),%st(1)
+
+	fildl	espan_t_v(%esi)				// espan_t_v															:: 		9-12 cycles
+										//																		:: 		!! IU stalls for 4 concurrent cycles
+	fildl	espan_t_u(%esi)				// espan_t_u | espan_t_v												:: 		9-12 cycles
+	movl	espan_t_v(%esi),%ecx		//																		:: 		1 cycle
+	movl	C(d_pzbuffer),%edi			//																		:: 		1 cycle
+										//																		:: 		!~ IU stalls for 2 concurrent cycles
+	fmuls	C(d_zistepu)				// espan_t_u * zistepu | espan_t_v										::		11 cycles
+										//																		:: 		!! IU stalls for 8 concurrent cycles
+	fxch	%st(1)						// espan_t_v | espan_t_u * zistepu										::		4 cycles
+	fmuls	C(d_zistepv)				// espan_t_v * zistepv | espan_t_u * zistepu							::		11 cycles
+										//																		:: 		!! IU stalls for 8 concurrent cycles
+	fxch	%st(1)						// espan_t_u * zistepu | espan_t_v * zistepv							::		4 cycles
+	fadds	C(d_ziorigin)				// (espan_t_u*zistepu)+ziorigin | espan_t_v * zistepv					:: 		8-20 cycles, ~7 concurrent
+	imull	C(d_zrowbytes),%ecx			//																		:: 		IU 13-42 cycles
+										//																		:: 		!! FPU stalls for 6 to 35 concurrent cycles
+	faddp	%st(0),%st(1)				// (espan_t_u*zistepu)+ziorigin + espan_t_v * zistepv					:: 		8-20 cycles
+										//																		:: 		!! IU pipeline stall for ~7 cycles
+
+										// total: 70 to 129 cycles
+										// 			FPU executed/possible execution cycles: 64/70 to 94/129, 72.8% to 91.4% utilization 
+										// 			IU executed/possible execution cycles: 15/44 to 44/73, 34.1% to 60.2% utilization
+
 
 // clamp if z is nearer than 2 (1/z > 0.5)
 	fcoms	float_point5

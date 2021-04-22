@@ -258,6 +258,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 	.extern fp_64kx64k
 	.extern pz
 	.extern spr8entryvec_table
+	.extern ftmp
+	.extern ftmp2
 #endif
 
 	.extern C(snd_scaletable)

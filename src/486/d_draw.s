@@ -122,39 +122,46 @@ LSpanLoop:
 	fildl	espan_t_v(%ebx)
 	fildl	espan_t_u(%ebx)
 
-	fld		%st(1)			// dv | du | dv
-	fmuls	C(d_sdivzstepv)	// dv*d_sdivzstepv | du | dv
-	fld		%st(1)			// du | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_sdivzstepu)	// du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fld		%st(2)			// du | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_tdivzstepu)	// du*d_tdivzstepu | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu | du*d_tdivzstepu | dv*d_sdivzstepv | du | dv
-	faddp	%st(0),%st(2)	// du*d_tdivzstepu |du*d_sdivzstepu + dv*d_sdivzstepv | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
-	fld		%st(3)			// dv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
-	fmuls	C(d_tdivzstepv)	// dv*d_tdivzstepv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | dv
+	fld		%st(1)				// dv | du | dv
+	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv | du | dv
+	fld		%st(1)				// du | dv*d_sdivzstepv | du | dv
+	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
+	fld		%st(2)				// du | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
+	fmuls	C(d_tdivzstepu)		// du*d_tdivzstepu | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
+
+	fxch	%st(1)				// du*d_sdivzstepu | du*d_tdivzstepu | dv*d_sdivzstepv | du | dv
+	faddp	%st(0),%st(2)		// du*d_tdivzstepu |du*d_sdivzstepu + dv*d_sdivzstepv | du | dv
+
+	fxch	%st(1)				// du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
+	fld		%st(3)				// dv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
+	fmuls	C(d_tdivzstepv)		// dv*d_tdivzstepv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
+	
+	fxch	%st(1)				// du*d_sdivzstepu + dv*d_sdivzstepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | dv
 	fadds	C(d_sdivzorigin)	// sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu; stays in %st(2) at end
-	fxch	%st(4)			// dv | dv*d_tdivzstepv | du*d_tdivzstepu | du |  s/z
+	
+	fxch	%st(4)				// dv | dv*d_tdivzstepv | du*d_tdivzstepu | du |  s/z
 	fmuls	C(d_zistepv)		// dv*d_zistepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | s/z
-	fxch	%st(1)			// dv*d_tdivzstepv |  dv*d_zistepv | du*d_tdivzstepu | du | s/z
-	faddp	%st(0),%st(2)	// dv*d_zistepv | dv*d_tdivzstepv + du*d_tdivzstepu | du | s/z
-	fxch	%st(2)			// du | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
+	
+	fxch	%st(1)				// dv*d_tdivzstepv |  dv*d_zistepv | du*d_tdivzstepu | du | s/z
+	faddp	%st(0),%st(2)		// dv*d_zistepv | dv*d_tdivzstepv + du*d_tdivzstepu | du | s/z
+	
+	fxch	%st(2)				// du | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
 	fmuls	C(d_zistepu)		// du*d_zistepu | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
-	fxch	%st(1)			// dv*d_tdivzstepv + du*d_tdivzstepu | du*d_zistepu | dv*d_zistepv | s/z
+	
+	fxch	%st(1)				// dv*d_tdivzstepv + du*d_tdivzstepu | du*d_zistepu | dv*d_zistepv | s/z
 	fadds	C(d_tdivzorigin)	// tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu; stays in %st(1) at end
-	fxch	%st(2)			// dv*d_zistepv | du*d_zistepu | t/z | s/z
-	faddp	%st(0),%st(1)	// dv*d_zistepv + du*d_zistepu | t/z | s/z
+	
+	fxch	%st(2)				// dv*d_zistepv | du*d_zistepu | t/z | s/z
+	faddp	%st(0),%st(1)		// dv*d_zistepv + du*d_zistepu | t/z | s/z
 
-	flds	fp_64k			// fp_64k | dv*d_zistepv + du*d_zistepu | t/z | s/z
-	fxch	%st(1)			// dv*d_zistepv + du*d_zistepu | fp_64k | t/z | s/z
 	fadds	C(d_ziorigin)	// zi = d_ziorigin + dv*d_zistepv + du*d_zistepu; stays in %st(0) at end
-
-							// 1/z | fp_64k | t/z | s/z
+	flds	fp_64k			// fp_64k | 1/z | t/z | s/z
+							
 //
 // calculate and clamp s & t
 //
-	fdivr	%st(0),%st(1)	// 1/z | z*64k | t/z | s/z
+	// divide 1/z by fp64k and store where fp64k was
+	fdiv	%st(1),%st(0)	//  z*64k | 1/z | t/z | s/z
 
 //
 // point %edi to the first pixel in the span
@@ -183,31 +190,29 @@ LSpanLoop:
 
 // finish up the s and t calcs
 
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	flds	C(d_sdivzstepu)	// C(d_sdivzstepu)
-	fmuls	spancountminus1	// C(d_sdivzstepu)*scm1
-	flds	C(d_tdivzstepu)	// C(d_tdivzstepu) | C(d_sdivzstepu)*scm1
-	fmuls	spancountminus1	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1 
-	flds	C(d_zistepu)	// C(d_zistepu) | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	fmuls	spancountminus1 // C(d_zistepu)*scm1 | C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_tdivzstepu)*scm1 | C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)	// C(d_sdivzstepu)*scm1
-	faddp	%st(0),%st(3)
-
-	flds	fp_64k
+	fildl	spancountminus1		//														::	9-12
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z				::	3
+	fmul	%st(1),%st(0)		// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z			::	16
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z							:: 	8-20
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z			::	3
+	fmul	%st(1),%st(0)		// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z	:: 	16
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z						:: 	8-20
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z		::	11
+	faddp	%st(0),%st(3)		// 1/z adj | t/z adj | s/z adj							::	8-20
+								//														:: TOTAL 82-121
+	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
 	jmp		LFDIVInFlight1
 
 LCleanup1:
 // finish up the s and t calcs
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
@@ -218,7 +223,6 @@ LCleanup1:
 	.align	4
 LSetupNotLast1:
 // finish up the s and t calcs
-	fxch	%st(1)			// z*64k | 1/z | t/z | s/z
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
 	fistpl	s				// z*64k | 1/z | t/z | s/z
