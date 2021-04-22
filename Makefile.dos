@@ -11,7 +11,7 @@ NOARCH=noarch
 SRC_DIR=$(shell pwd)/src
 BUILDDIR ?= $(shell pwd)/build
 
-REVISION=3
+REVISION=4
 
 OLEVEL=O3
 OCPU=486
