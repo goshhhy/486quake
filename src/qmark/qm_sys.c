@@ -62,6 +62,8 @@ static double		curtime = 0.0;
 static double		lastcurtime = 0.0;
 static double		oldtime = 0.0;
 
+static int test_length = 1.0f;
+
 qboolean		isDedicated;
 
 static int			minmem;
@@ -346,15 +348,15 @@ UpdateSbrk:
 	if (lockunlockmem)
 	{
 		__dpmi_unlock_linear_region (&info);
-		printf ("Locked and unlocked %d Mb data\n", working_size / 0x100000);
+		//printf ("Locked and unlocked %d Mb data\n", working_size / 0x100000);
 	}
 	else if (lockmem)
 	{
-		printf ("Locked %d Mb data\n", working_size / 0x100000);
+		//printf ("Locked %d Mb data\n", working_size / 0x100000);
 	}
 	else
 	{
-		printf ("Allocated %d Mb data\n", working_size / 0x100000);
+		//printf ("Allocated %d Mb data\n", working_size / 0x100000);
 	}
 
 // touch all the memory to make sure it's there. The 16-page skip is to
@@ -791,18 +793,18 @@ void Sys_PageInProgram(void)
 	{
 		dos_unlockmem((void *)&start_of_memory,
 						 end_of_memory - (int)&start_of_memory);
-		printf ("Locked and unlocked %d Mb image\n",
-				(end_of_memory - (int)&start_of_memory) / 0x100000);
+		//printf ("Locked and unlocked %d Mb image\n",
+		//		(end_of_memory - (int)&start_of_memory) / 0x100000);
 	}
 	else if (lockmem)
 	{
-		printf ("Locked %d Mb image\n",
-				(end_of_memory - (int)&start_of_memory) / 0x100000);
+		//printf ("Locked %d Mb image\n",
+		//		(end_of_memory - (int)&start_of_memory) / 0x100000);
 	}
 	else
 	{
-		printf ("Loaded %d Mb image\n",
-				(end_of_memory - (int)&start_of_memory) / 0x100000);
+		//printf ("Loaded %d Mb image\n",
+		//		(end_of_memory - (int)&start_of_memory) / 0x100000);
 	}
 
 // touch the entire image, doing the 16-page skip so Win95 doesn't think we're
@@ -846,7 +848,7 @@ int Qm_Test_QmPointTransformNi( void  ) {
 
 	printf( "Qm_PointTransformNi: " );
 	oldtime = newtime = Sys_FloatTime ();
-	targettime = oldtime + 5.f;
+	targettime = oldtime + test_length;
 	iters = 0;
 
 	for ( i = 0; newtime < targettime; i++ ) {
@@ -870,7 +872,7 @@ int Qm_Test_QmPointTransformFx( void  ) {
 
 	printf( "Qm_PointTransformFx: " );
 	oldtime = newtime = Sys_FloatTime ();
-	targettime = oldtime + 5.f;
+	targettime = oldtime + test_length;
 	iters = 0;
 
 	for ( i = 0; newtime < targettime; i++ ) {
@@ -893,7 +895,7 @@ int Qm_Test_QmFpIntStd( void  ) {
 
 	printf( "Qm_FpIntStd: " );
 	oldtime = newtime = Sys_FloatTime ();
-	targettime = oldtime + 5.f;
+	targettime = oldtime + test_length;
 	iters = 0;
 
 	for ( i = 0; newtime < targettime; i++ ) {
@@ -919,7 +921,7 @@ int Qm_Test_QmFpIntTerje( void  ) {
 
 	printf( "Qm_FpIntTerje: " );
 	oldtime = newtime = Sys_FloatTime ();
-	targettime = oldtime + 5.f;
+	targettime = oldtime + test_length;
 	iters = 0;
 
 	for ( i = 0; newtime < targettime; i++ ) {
@@ -935,7 +937,12 @@ int Qm_Test_QmFpIntTerje( void  ) {
 	totaltime = newtime - oldtime;
 	score = (int)( ((float)iters / totaltime) / 1000.f );
 	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
-
+	
+		printf("|   float   |  std  | terje |\n");
+		printf("|-----------|-------|-------|\n");
+	for ( float f = 1.5; f < 10.5; f += 1 ) {
+		printf("|  %1.5f  |  %03i  |  %03i  |\n", f, Qm_FpIntStd(f), Qm_FpIntTerje(f) );
+	}
 	return score;
 }
 
@@ -946,7 +953,7 @@ int Qm_Test_TransformVector( void  ) {
 
 	printf( "TransformVector: " );
 	oldtime = newtime = Sys_FloatTime ();
-	targettime = oldtime + 5.f;
+	targettime = oldtime + test_length;
 	iters = 0;
 
 	for ( i = 0; newtime < targettime; i++ ) {
@@ -962,6 +969,104 @@ int Qm_Test_TransformVector( void  ) {
 
 	return score;
 }
+
+int Qm_Test_QmFpIuSequential( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+	vec3_t in = { 1.3, 2.4, 3.5 }, out = { 4.6, 5.7, 6.8 };
+
+	printf( "QmFpIuSequential: " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		for ( i = 0; i < 100000; i++ )
+			Qm_FpIuSequential( 12.5f, i );
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
+int Qm_Test_QmFpIuInterleaved( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+	vec3_t in = { 1.3, 2.4, 3.5 }, out = { 4.6, 5.7, 6.8 };
+
+	printf( "QmFpIuInterleaved: " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		for ( i = 0; i < 100000; i++ )
+			Qm_FpIuInterleaved( 12.5f, i );
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
+int Qm_Test_QmFpRegSpeedTest( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+	vec3_t in = { 1.3, 2.4, 3.5 }, out = { 4.6, 5.7, 6.8 };
+
+	printf( "QmFpRegSpeedTest: " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		for ( i = 0; i < 100000; i++ )
+			Qm_FpRegSpeedTest( 2.0f );
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
+int Qm_Test_QmFpMemSpeedTest( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+	vec3_t in = { 1.3, 2.4, 3.5 }, out = { 4.6, 5.7, 6.8 };
+
+	printf( "QmFpMemSpeedTest: " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		for ( i = 0; i < 100000; i++ )
+			Qm_FpMemSpeedTest( 2.0f );
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
+
 
 int Qm_Test_DrawParticle( void ) {
 	float oldtime, newtime, targettime, totaltime;
@@ -985,7 +1090,7 @@ int Qm_Test_DrawParticle( void ) {
 
 	printf( "D_DrawParticle: " );
 	oldtime = newtime = Sys_FloatTime ();
-	targettime = oldtime + 5.f;
+	targettime = oldtime + test_length;
 	iters = 0;
 
 	for ( i = 0; newtime < targettime; i++ ) {
@@ -1003,6 +1108,24 @@ int Qm_Test_DrawParticle( void ) {
 }
 
 unsigned char pal[768];
+
+void emuprint(void) {
+	static int count = 0;
+
+	switch(count++) {
+		case 0:
+			printf("    (are you running this in an emulator?)\n\n");
+			break;
+		case 1:
+			printf("\n    (i'm pretty sure this is an emulator.)\n\n");
+			break;
+		case 2:
+			printf("\n    (this smells like dosbox...)\n");
+			break;
+		default:
+			break;
+	}
+}
 
 /*
 ================
@@ -1050,36 +1173,48 @@ int main (int c, char **v)
 
 	//VID_Init(pal);
 
-	printf( "## Starting FXCH optimization tests\n" );
+	Sys_LowFPPrecision ();
+
+	int emu = Qm_FpIntTerje( 10 );
+	if ( emu != 0 ) {
+		emuprint();
+	}
+
+	printf( "## FPU timing tests\n" );
 	PointTransformNiScore = Qm_Test_QmPointTransformNi();
 	PointTransformFxScore = Qm_Test_QmPointTransformFx();
 
 	printf("\n");
 	if ( PointTransformNiScore > PointTransformFxScore ) {
-		printf("    It appears your machine DOES NOT benefit from FXCH optimizations.\n");
-		printf("    You should get the best results with qmark486, and 486quake variants.\n");
+		printf("    It appears your machine DOES NOT benefit from FXCH optimizations.\n\n");
 	} else {
-		printf("    It appears your machine DOES benefit from FXCH optimizations.\n");
-		printf("    You should get the best results with qmark586, and 586quake variants.\n");
+		printf("    It appears your machine DOES benefit from FXCH optimizations.\n\n");
 	}
-	printf("    If not, please file an issue! We want to hear about your hardware.\n");
 
-	// //////////// //
-	// fpint tests //
-	// //////////// //
-	printf( "\n## Starting FpInt optimization tests\n" );
-	PointTransformNiScore = Qm_Test_QmFpIntStd();
-	PointTransformFxScore = Qm_Test_QmFpIntTerje();
+	int FpIuSequentialScore, FpIuInterleavedScore, FpRegSpeedTestScore, FpMemSpeedTestScore;
+
+	FpIuSequentialScore = Qm_Test_QmFpIuSequential();
+	FpIuInterleavedScore = Qm_Test_QmFpIuInterleaved();
+	if ( FpIuSequentialScore == FpIuInterleavedScore ) {
+		emuprint();
+	}
+
+	FpRegSpeedTestScore = Qm_Test_QmFpRegSpeedTest();
+	FpMemSpeedTestScore = Qm_Test_QmFpMemSpeedTest();
+	if ( FpIuSequentialScore == FpIuInterleavedScore ) {
+		emuprint();
+	}
 
 	// //////////// //
 	// math.s tests //
 	// //////////// //
-	printf( "\n## Starting math.s tests\n" );
+	printf( "\n## Starting math tests\n" );
 
 	int TransformVectorScore, DrawParticleScore;
 
 	TransformVectorScore = Qm_Test_TransformVector();
 	DrawParticleScore = Qm_Test_DrawParticle();
+
 }
 
 
