@@ -39,7 +39,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //----------------------------------------------------------------------
 
 	.data
-
 	.text
 
 // out-of-line, rarely-needed clamping code
@@ -94,28 +93,28 @@ LClampHigh5:
 	.align 4
 .globl C(D_DrawSpans16)
 C(D_DrawSpans16):
-	pushl	%ebp				// preserve caller's stack frame
-	pushl	%edi
-	pushl	%esi				// preserve register variables
-	pushl	%ebx
 
 //
 // set up scaled-by-16 steps, for 16-long segments; also set up cacheblock
 // and span list pointers
 //
 // TODO: any overlap from rearranging?
-	flds	C(d_sdivzstepu)
-	fmuls	fp_16
+		flds	C(d_sdivzstepu)
+		fmuls	fp_16
+	pushl	%ebp				// preserve caller's stack frame
+	pushl	%edi
+	pushl	%esi				// preserve register variables
+	pushl	%ebx
 	movl	C(cacheblock),%edx
-	flds	C(d_tdivzstepu)
-	fmuls	fp_16
+		flds	C(d_tdivzstepu)
+		fmuls	fp_16
 	movl	pspans(%esp),%ebx	// point to the first span descriptor
-	flds	C(d_zistepu)
-	fmuls	fp_16
+		flds	C(d_zistepu)
+		fmuls	fp_16
 	movl	%edx,pbase			// pbase = cacheblock
-	fstps	zi16stepu
-	fstps	tdivz16stepu
-	fstps	sdivz16stepu
+		fstps	zi16stepu
+		fstps	tdivz16stepu
+		fstps	sdivz16stepu
 
 LSpanLoop:
 //
@@ -123,59 +122,35 @@ LSpanLoop:
 // initial s and t values
 //
 // FIXME: pipeline FILD?
-	fildl	espan_t_v(%ebx)
-	fildl	espan_t_u(%ebx)
+	fildl	espan_t_v(%ebx)     // dv                                                   :: 9-12
+	fsts	ftmp				// dv													:: 7
+	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv 				                        :: 11
+    fildl	espan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12
+	fsts	ftmp2				// du | dv*d_sdivzstepv									:: 7
+	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv 			        :: 11
+	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv 			        :: 8-20
+	fadds	C(d_sdivzorigin)	// s/z 			                                     	:: 8-20
 
-	fld		%st(1)			// dv | du | dv
-	fmuls	C(d_sdivzstepv)	// dv*d_sdivzstepv | du | dv
-	fld		%st(1)			// du | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_sdivzstepu)	// du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fld		%st(2)			// du | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_tdivzstepu)	// du*d_tdivzstepu | du*d_sdivzstepu |
-							//  dv*d_sdivzstepv | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu | du*d_tdivzstepu |
-							//  dv*d_sdivzstepv | du | dv
-	faddp	%st(0),%st(2)	// du*d_tdivzstepu |
-							//  du*d_sdivzstepu + dv*d_sdivzstepv | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  du*d_tdivzstepu | du | dv
-	fld		%st(3)			// dv | du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  du*d_tdivzstepu | du | dv
-	fmuls	C(d_tdivzstepv)	// dv*d_tdivzstepv |
-							//  du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  du*d_tdivzstepu | du | dv
-	fxch	%st(1)			// du*d_sdivzstepu + dv*d_sdivzstepv |
-							//  dv*d_tdivzstepv | du*d_tdivzstepu | du | dv
-	fadds	C(d_sdivzorigin)	// sdivz = d_sdivzorigin + dv*d_sdivzstepv +
-							//  du*d_sdivzstepu; stays in %st(2) at end
-	fxch	%st(4)			// dv | dv*d_tdivzstepv | du*d_tdivzstepu | du |
-							//  s/z
-	fmuls	C(d_zistepv)		// dv*d_zistepv | dv*d_tdivzstepv |
-							//  du*d_tdivzstepu | du | s/z
-	fxch	%st(1)			// dv*d_tdivzstepv |  dv*d_zistepv |
-							//  du*d_tdivzstepu | du | s/z
-	faddp	%st(0),%st(2)	// dv*d_zistepv |
-							//  dv*d_tdivzstepv + du*d_tdivzstepu | du | s/z
-	fxch	%st(2)			// du | dv*d_tdivzstepv + du*d_tdivzstepu |
-							//  dv*d_zistepv | s/z
-	fmuls	C(d_zistepu)		// du*d_zistepu |
-							//  dv*d_tdivzstepv + du*d_tdivzstepu |
-							//  dv*d_zistepv | s/z
-	fxch	%st(1)			// dv*d_tdivzstepv + du*d_tdivzstepu |
-							//  du*d_zistepu | dv*d_zistepv | s/z
-	fadds	C(d_tdivzorigin)	// tdivz = d_tdivzorigin + dv*d_tdivzstepv +
-							//  du*d_tdivzstepu; stays in %st(1) at end
-	fxch	%st(2)			// dv*d_zistepv | du*d_zistepu | t/z | s/z
-	faddp	%st(0),%st(1)	// dv*d_zistepv + du*d_zistepu | t/z | s/z
+	fld		C(d_tdivzstepv)		// d_tdivzstepv | s/z 			                        :: 3
+	fmuls	ftmp				// dv*d_tdivzstepv | s/z  			                    :: 11
+	fld		C(d_tdivzstepu)		// d_tdivzstepu | dv*d_tdivzstepv | s/z                 :: 3
+	fmuls	ftmp2				// du*d_tdivzstepu | dv*d_tdivzstepv | s/z    			:: 11
+	faddp	%st(0),%st(1)		// du*d_tdivzstepu + dv*d_tdivzstepv | s/z				:: 8-20
+	fadds	C(d_tdivzorigin)	// t/z | s/z 											:: 8-20
 
-	fadds	C(d_ziorigin)		// zi = d_ziorigin + dv*d_zistepv +
-							//  du*d_zistepu; stays in %st(0) at end
+	fld		C(d_zistepv)		// d_zistepv | t/z | s/z                        		:: 3
+	fmuls	ftmp				// dv*d_zistepv | t/z | s/z								:: 11
+	fld		C(d_zistepu)		// d_zistepu | dv*d_zistepv | t/z | s/z					:: 3
+	fmuls	ftmp2				// du*d_zistepu | dv*d_zistepv | t/z | s/z              :: 11
+	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv | t/z | s/z             	:: 8-20
+	fadds	C(d_ziorigin)		// 1/z | t/z | s/z                                      :: 8-20
+                                //                                                      :: TOTAL 158-236
 
-	flds	fp_64k			// fp_64k | 1/z | t/z | s/z
+	flds	fp_64k				// fp_64k | 1/z | t/z | s/z
 //
 // calculate and clamp s & t
 //
-	fdiv	%st(1),%st(0)	// 1/z | z*64k | t/z | s/z
+	fdiv	%st(1),%st(0)		// z*64k | 1/z | t/z | s/z
 
 //
 // point %edi to the first pixel in the span
@@ -209,16 +184,18 @@ LSpanLoop:
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z
 
-	fildl	spancountminus1
-
-	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z
-	fmul	%st(1),%st(0)		// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z
-	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z
-	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z
-	fmul	%st(1),%st(0)		// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z
-	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z	
-	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z
-	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z adj
+	fildl	spancountminus1		//														:: 9-12
+	fsts	ftmp				//														:: 7
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z				:: 3
+	fmuls	ftmp				// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z			:: 11
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z							:: 8-20
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z			:: 3
+	fmuls	ftmp				// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z	:: 11
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z						:: 8-20
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z		:: 11
+	faddp	%st(0),%st(3)		// 1/z adj | t/z adj | s/z adj							:: 8-20
+								//														:: TOTAL 79-118
+								
 	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
@@ -445,16 +422,19 @@ LSetUp1:
 	jz		LFDIVInFlight2	// if only one pixel, no need to start an FDIV
 	movl	%ecx,spancountminus1
 
-	fildl	spancountminus1
+	fildl	spancountminus1		//														:: 9-12
+	fsts	ftmp				//														:: 7
+	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z				:: 3
+	fmuls	ftmp				// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z			:: 11
+	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z							:: 8-20
+	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z			:: 3
+	fmuls	ftmp				// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z	:: 11
+	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z						:: 8-20
+	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z		:: 11
+	faddp	%st(0),%st(3)		// 1/z adj | t/z adj | s/z adj							:: 8-20
+								//														:: TOTAL 79-118
 
-	flds	C(d_zistepu)		// C(d_zistepu) | scm1 | 1/z | t/z | s/z
-	fmul	%st(1),%st(0)		// C(d_zistepu)*scm1 | scm1 | 1/z | t/z | s/z
-	faddp	%st(0),%st(2)		// scm1 | 1/z adj | t/z | s/z
-	flds	C(d_tdivzstepu)		// C(d_tdivzstepu) | scm1 | 1/z adj | t/z | s/z
-	fmul	%st(1),%st(0)		// C(d_tdivzstepu)*scm1 | scm1 | 1/z adj | t/z | s/z
-	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z	
-	fmuls	C(d_sdivzstepu)		// C(d_sdivzstepu)*scm1 | 1/z adj | t/z adj | s/z
-	faddp	%st(0),%st(3)		// scm1 | 1/z adj | t/z adj | s/z adj
+
 	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
