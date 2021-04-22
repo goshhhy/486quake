@@ -21,3 +21,7 @@ for cpu in 386 486 586 686; do
         #done
     done
 done
+
+make -f Makefile.qmark clean
+make -j8 -f Makefile.qmark OCPU=486 OLEVEL=O3 OLTO=yes OASM=yes
+cp build/qmark486.exe bin/qmark.exe
