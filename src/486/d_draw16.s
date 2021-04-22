@@ -291,7 +291,7 @@ LNotLastSegment:
 		addl	%eax,%ebp
 		movl	C(bbextents),%eax
 	fistpl	tnext
-	
+
 	movl	tnext,%edx
 	addl	%edx,%ecx
 	movl	C(bbextentt),%edx
@@ -519,7 +519,6 @@ LFDIVInFlight2:
 // last segment of scan
 //
 LLastSegment:
-
 //
 // advance s/z, t/z, and 1/z, and calculate s & t at end of span and steps to
 // get there. The number of pixels left is variable, and we want to land on the
@@ -527,24 +526,22 @@ LLastSegment:
 //
 	testl	%ecx,%ecx
 	jz		LNoSteps		// just draw the last pixel and we're done
-
 // pick up after the FDIV that was left in flight previously
-
 	fld		%st(0)			// duplicate the z*64k
 	fmul	%st(4),%st(0)	// s = s/z * z
+		// during that fmul... (16 cycles, 13 concurrent)
+		movb	(%esi),%al		// load first texel in segment
+		movl	C(tadjust),%ebx
+		movb	%al,(%edi)		// store first pixel in segment
+		movl	C(sadjust),%eax
 	fistpl	snext
 	fmul	%st(2),%st(0)	// t = t/z * z
+		// during that fmul...
+		addl	snext,%eax
+		movl	C(bbextents),%ebp
 	fistpl	tnext
 
-	movb	(%esi),%al		// load first texel in segment
-	movl	C(tadjust),%ebx
-	movb	%al,(%edi)		// store first pixel in segment
-	movl	C(sadjust),%eax
-
-	addl	snext,%eax
 	addl	tnext,%ebx
-
-	movl	C(bbextents),%ebp
 	movl	C(bbextentt),%edx
 
 	cmpl	$4096,%eax
