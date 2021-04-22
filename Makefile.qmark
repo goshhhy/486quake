@@ -191,6 +191,7 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/sys_dosa.o \
 	$(BUILDDIR)/486quake/qm_fxch.o \
 	$(BUILDDIR)/486quake/qm_terje.o \
+	$(BUILDDIR)/486quake/qm_inter.o \
 	$(BUILDDIR)/486quake/qm_sys.o \
     
 ifneq "$(OASM)" "yes"
@@ -527,6 +528,9 @@ $(BUILDDIR)/486quake/qm_fxch.o : $(SRC_DIR)/qmark/qm_fxch.s
 $(BUILDDIR)/486quake/qm_terje.o : $(SRC_DIR)/qmark/qm_terje.s
 	$(DO_AS)
 
+$(BUILDDIR)/486quake/qm_inter.o : $(SRC_DIR)/qmark/qm_inter.s
+	$(DO_AS)
+	
 #############################################################################
 # MISC
 #############################################################################
