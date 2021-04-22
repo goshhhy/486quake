@@ -11,7 +11,7 @@ oasm=yes
 olto=yes
 
 for cpu in 386 486 586 686; do
-    for olevel in Os O3; do
+    for olevel in O3; do
         #for olto in yes no; do 
             #for oasm in yes no; do
                 make -f Makefile.dos clean
