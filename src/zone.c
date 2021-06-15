@@ -23,14 +23,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define	DYNAMIC_SIZE	0xc000
 
-#define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
 
 typedef struct memblock_s
 {
 	int		size;           // including the header and possibly tiny fragments
 	int     tag;            // a tag of 0 is a free block
-	int     id;        		// should be ZONEID
 	struct memblock_s       *next, *prev;
 	int		pad;			// pad to 64 bit boundary
 } memblock_t;
@@ -80,13 +78,11 @@ void Z_ClearZone (memzone_t *zone, int size)
 	zone->blocklist.next = zone->blocklist.prev = block =
 		(memblock_t *)( (byte *)zone + sizeof(memzone_t) );
 	zone->blocklist.tag = 1;	// in use block
-	zone->blocklist.id = 0;
 	zone->blocklist.size = 0;
 	zone->rover = block;
 	
 	block->prev = block->next = &zone->blocklist;
 	block->tag = 0;			// free block
-	block->id = ZONEID;
 	block->size = size - sizeof(memzone_t);
 }
 
@@ -104,8 +100,6 @@ void Z_Free (void *ptr)
 		Sys_Error ("Z_Free: NULL pointer");
 
 	block = (memblock_t *) ( (byte *)ptr - sizeof(memblock_t));
-	if (block->id != ZONEID)
-		Sys_Error ("Z_Free: freed a pointer without ZONEID");
 	if (block->tag == 0)
 		Sys_Error ("Z_Free: freed a freed pointer");
 
@@ -143,7 +137,6 @@ void *Z_Malloc (int size)
 {
 	void	*buf;
 	
-Z_CheckHeap ();	// DEBUG
 	buf = Z_TagMalloc (size, 1);
 	if (!buf)
 		Sys_Error ("Z_Malloc: failed on allocation of %i bytes",size);
@@ -191,7 +184,6 @@ void *Z_TagMalloc (int size, int tag)
 		new->size = extra;
 		new->tag = 0;			// free block
 		new->prev = base;
-		new->id = ZONEID;
 		new->next = base->next;
 		new->next->prev = new;
 		base->next = new;
@@ -202,11 +194,6 @@ void *Z_TagMalloc (int size, int tag)
 	
 	mainzone->rover = base->next;	// next allocation will start looking here
 	
-	base->id = ZONEID;
-
-// marker for memory trash testing
-	*(int *)((byte *)base + base->size - 4) = ZONEID;
-
 	return (void *) ((byte *)base + sizeof(memblock_t));
 }
 
