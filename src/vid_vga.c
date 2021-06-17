@@ -410,15 +410,11 @@ VGA_SetPalette
 */
 void VGA_SetPalette(viddef_t *lvid, vmode_t *pcurrentmode, unsigned char *pal)
 {
-	int shiftcomponents=2;
 	int i;
-
-	UNUSED(lvid);
-	UNUSED(pcurrentmode);
 
 	dos_outportb(0x3c8, 0);
 	for (i=0 ; i<768 ; i++)
-		outportb(0x3c9, pal[i]>>shiftcomponents);
+		outportb(0x3c9, pal[i]);
 }
 
 

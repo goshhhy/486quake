@@ -251,10 +251,10 @@ void V_DriftPitch (void)
 */ 
  
  
-cshift_t	cshift_empty = { {130,80,50}, 0 };
-cshift_t	cshift_water = { {130,80,50}, 128 };
-cshift_t	cshift_slime = { {0,25,5}, 150 };
-cshift_t	cshift_lava = { {255,80,0}, 150 };
+cshift_t	cshift_empty = { {130>>2,80>>2,50>>2}, 0 };
+cshift_t	cshift_water = { {130>>2,80>>2,50>>2}, 128 };
+cshift_t	cshift_slime = { {0>>2,25>>2,5>>2}, 150 };
+cshift_t	cshift_lava = { {255>>2,80>>2,0>>2}, 150 };
 
 cvar_t		v_gamma = {"gamma", "1", true};
 
@@ -283,7 +283,7 @@ void BuildGammaTable (float g)
 			inf = 0;
 		if (inf > 255)
 			inf = 255;
-		gammatable[i] = inf;
+		gammatable[i] = inf >> 2;
 	}
 }
 
@@ -342,21 +342,21 @@ void V_ParseDamage (void)
 
 	if (armor > blood)		
 	{
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 200;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 100;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 100;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 200 >> 2;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 100 >> 2;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 100 >> 2;
 	}
 	else if (armor)
 	{
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 220;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 50;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 50;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 220 >> 2;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 50 >> 2;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 50 >> 2;
 	}
 	else
 	{
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 255;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 0;
-		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 0;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[0] = 255 >> 2;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[1] = 0 >> 2;
+		cl.cshifts[CSHIFT_DAMAGE].destcolor[2] = 0 >> 2;
 	}
 
 //
@@ -386,9 +386,9 @@ V_cshift_f
 */
 void V_cshift_f (void)
 {
-	cshift_empty.destcolor[0] = atoi(Cmd_Argv(1));
-	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2));
-	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3));
+	cshift_empty.destcolor[0] = atoi(Cmd_Argv(1)) >> 2;
+	cshift_empty.destcolor[1] = atoi(Cmd_Argv(2)) >> 2;
+	cshift_empty.destcolor[2] = atoi(Cmd_Argv(3)) >> 2;
 	cshift_empty.percent = atoi(Cmd_Argv(4));
 }
 
@@ -402,9 +402,9 @@ When you run over an item, the server sends this command
 */
 void V_BonusFlash_f (void)
 {
-	cl.cshifts[CSHIFT_BONUS].destcolor[0] = 215;
-	cl.cshifts[CSHIFT_BONUS].destcolor[1] = 186;
-	cl.cshifts[CSHIFT_BONUS].destcolor[2] = 69;
+	cl.cshifts[CSHIFT_BONUS].destcolor[0] = 215 >> 2;
+	cl.cshifts[CSHIFT_BONUS].destcolor[1] = 186 >> 2;
+	cl.cshifts[CSHIFT_BONUS].destcolor[2] = 69 >> 2;
 	cl.cshifts[CSHIFT_BONUS].percent = 50;
 }
 
@@ -443,30 +443,30 @@ void V_CalcPowerupCshift (void)
 {
 	if (cl.items & IT_QUAD)
 	{
-		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 0;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 0;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 255;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 0 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 0 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 255 >> 2;
 		cl.cshifts[CSHIFT_POWERUP].percent = 30;
 	}
 	else if (cl.items & IT_SUIT)
 	{
-		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 0;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 255;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 0;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 0 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 255 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 0 >> 2;
 		cl.cshifts[CSHIFT_POWERUP].percent = 20;
 	}
 	else if (cl.items & IT_INVISIBILITY)
 	{
-		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 100;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 100;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 100;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 100 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 100 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 100 >> 2;
 		cl.cshifts[CSHIFT_POWERUP].percent = 100;
 	}
 	else if (cl.items & IT_INVULNERABILITY)
 	{
-		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 255;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 255;
-		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 0;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[0] = 255 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[1] = 255 >> 2;
+		cl.cshifts[CSHIFT_POWERUP].destcolor[2] = 0 >> 2;
 		cl.cshifts[CSHIFT_POWERUP].percent = 30;
 	}
 	else
