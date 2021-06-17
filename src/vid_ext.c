@@ -183,16 +183,13 @@ void VID_SetVESAPalette (viddef_t *lvid, vmode_t *pcurrentmode,
 	int		i;
 	byte	*pp;
 
-	UNUSED(lvid);
-	UNUSED(pcurrentmode);
-
 	pp = ppal;
 
 	for (i=0 ; i<256 ; i++)
 	{
-		pp[2] = pal[0] >> 2;
-		pp[1] = pal[1] >> 2;
-		pp[0] = pal[2] >> 2;
+		pp[2] = pal[0];
+		pp[1] = pal[1];
+		pp[0] = pal[2];
 		pp += 4;
 		pal += 3;
 	}
