@@ -106,13 +106,9 @@ LDo3Forward:
 	fadds	float_point5
 	fxch	%st(2)			// fv0v2+(fv1v2-fv0v2)*scale | scale | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
 	fadds	float_point5
-	fxch	%st(3)			// fv0v0+(fv1v0-fv0v0)*scale | scale | 
-							//  fv0v1+(fv1v1-fv0v1)*scale |
-							//  fv0v2+(fv1v2-fv0v2)*scale
-	fistpl	fv_v+0-12(%edx)	// scale | fv0v1+(fv1v1-fv0v1)*scale |
-							//  fv0v2+(fv1v2-fv0v2)*scale
-	fxch	%st(1)			// fv0v1+(fv1v1-fv0v1)*scale | scale |
-							//  fv0v2+(fv1v2-fv0v2)*scale | scale
+	fxch	%st(3)			// fv0v0+(fv1v0-fv0v0)*scale | scale | fv0v1+(fv1v1-fv0v1)*scale | //  fv0v2+(fv1v2-fv0v2)*scale
+	fistpl	fv_v+0-12(%edx)	// scale | fv0v1+(fv1v1-fv0v1)*scale | fv0v2+(fv1v2-fv0v2)*scale
+	fxch	%st(1)			// fv0v1+(fv1v1-fv0v1)*scale | scale | fv0v2+(fv1v2-fv0v2)*scale | scale
 	fistpl	fv_v+4-12(%edx)	// scale | fv0v2+(fv1v2-fv0v2)*scale
 	fxch	%st(1)			// fv0v2+(fv1v2-fv0v2)*sc | scale
 	fistpl	fv_v+8-12(%edx)	// scale

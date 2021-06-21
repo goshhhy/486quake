@@ -175,11 +175,11 @@ LSpanLoop:
 
 	decl	%ecx
 	jz		LCleanup1		// if only one pixel, no need to start an FDIV
-	movl	%ecx,spancountminus1
 
 // finish up the s and t calcs
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
+		movl	%ecx,spancountminus1
 	fistpl	s				// z*64k | 1/z | t/z | s/z
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 	fistpl	t				// 1/z | t/z | s/z

@@ -119,43 +119,31 @@ LSpanLoop:
 // initial s and t values
 //
 // FIXME: pipeline FILD?
-	fildl	espan_t_v(%ebx)
-	fildl	espan_t_u(%ebx)
+	fildl	espan_t_v(%ebx)     // dv                                                   :: 9-12
+	fsts	ftmp				// dv													:: 7
+	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv 				                        :: 11
+    fildl	espan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12
+	fsts	ftmp2				// du | dv*d_sdivzstepv									:: 7
+	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv 			        :: 11
+	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv 			        :: 8-20
+	fadds	C(d_sdivzorigin)	// s/z 			                                     	:: 8-20
 
-	fld		%st(1)				// dv | du | dv
-	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv | du | dv
-	fld		%st(1)				// du | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fld		%st(2)				// du | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
-	fmuls	C(d_tdivzstepu)		// du*d_tdivzstepu | du*d_sdivzstepu | dv*d_sdivzstepv | du | dv
+	fld		C(d_tdivzstepv)		// d_tdivzstepv | s/z 			                        :: 3
+	fmuls	ftmp				// dv*d_tdivzstepv | s/z  			                    :: 11
+	fld		C(d_tdivzstepu)		// d_tdivzstepu | dv*d_tdivzstepv | s/z                 :: 3
+	fmuls	ftmp2				// du*d_tdivzstepu | dv*d_tdivzstepv | s/z    			:: 11
+	faddp	%st(0),%st(1)		// du*d_tdivzstepu + dv*d_tdivzstepv | s/z				:: 8-20
+	fadds	C(d_tdivzorigin)	// t/z | s/z 											:: 8-20
 
-	fxch	%st(1)				// du*d_sdivzstepu | du*d_tdivzstepu | dv*d_sdivzstepv | du | dv
-	faddp	%st(0),%st(2)		// du*d_tdivzstepu |du*d_sdivzstepu + dv*d_sdivzstepv | du | dv
+	fld		C(d_zistepv)		// d_zistepv | t/z | s/z                        		:: 3
+	fmuls	ftmp				// dv*d_zistepv | t/z | s/z								:: 11
+	fld		C(d_zistepu)		// d_zistepu | dv*d_zistepv | t/z | s/z					:: 3
+	fmuls	ftmp2				// du*d_zistepu | dv*d_zistepv | t/z | s/z              :: 11
+	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv | t/z | s/z             	:: 8-20
+	fadds	C(d_ziorigin)		// 1/z | t/z | s/z                                      :: 8-20
+                                //                                                      :: TOTAL 158-236
 
-	fxch	%st(1)				// du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
-	fld		%st(3)				// dv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
-	fmuls	C(d_tdivzstepv)		// dv*d_tdivzstepv | du*d_sdivzstepu + dv*d_sdivzstepv | du*d_tdivzstepu | du | dv
-	
-	fxch	%st(1)				// du*d_sdivzstepu + dv*d_sdivzstepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | dv
-	fadds	C(d_sdivzorigin)	// sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu; stays in %st(2) at end
-	
-	fxch	%st(4)				// dv | dv*d_tdivzstepv | du*d_tdivzstepu | du |  s/z
-	fmuls	C(d_zistepv)		// dv*d_zistepv | dv*d_tdivzstepv | du*d_tdivzstepu | du | s/z
-	
-	fxch	%st(1)				// dv*d_tdivzstepv |  dv*d_zistepv | du*d_tdivzstepu | du | s/z
-	faddp	%st(0),%st(2)		// dv*d_zistepv | dv*d_tdivzstepv + du*d_tdivzstepu | du | s/z
-	
-	fxch	%st(2)				// du | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
-	fmuls	C(d_zistepu)		// du*d_zistepu | dv*d_tdivzstepv + du*d_tdivzstepu | dv*d_zistepv | s/z
-	
-	fxch	%st(1)				// dv*d_tdivzstepv + du*d_tdivzstepu | du*d_zistepu | dv*d_zistepv | s/z
-	fadds	C(d_tdivzorigin)	// tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu; stays in %st(1) at end
-	
-	fxch	%st(2)				// dv*d_zistepv | du*d_zistepu | t/z | s/z
-	faddp	%st(0),%st(1)		// dv*d_zistepv + du*d_zistepu | t/z | s/z
-
-	fadds	C(d_ziorigin)	// zi = d_ziorigin + dv*d_zistepv + du*d_zistepu; stays in %st(0) at end
-	flds	fp_64k			// fp_64k | 1/z | t/z | s/z
+	flds	fp_64k				// fp_64k | 1/z | t/z | s/z
 							
 //
 // calculate and clamp s & t

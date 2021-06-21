@@ -182,13 +182,11 @@ LCalcFirst:
 
 	call	LTransformAndProject	// v0 | lzi0 | u0
 
-	fsts	Lv0
-	fxch	%st(2)					// u0 | lzi0 | v0
-	fstps	Lu0						// lzi0 | v0
-	fstps	Lzi0					// v0
-
-//		ceilv0 = (int)(v0 - 2000) + 2000; // ceil(v0);
-	fistpl	Lceilv0
+	fsts	Lv0	
+	//		ceilv0 = (int)(v0 - 2000) + 2000; // ceil(v0);
+	fistpl	Lceilv0					// lzi0 | u0
+	fstps	Lzi0					// lzi0 | u0
+	fstps	Lu0						
 
 //	}
 
@@ -226,9 +224,9 @@ LP0:
 
 	fxch	%st(1)					// lzi1 | lzi0 | u1 | v0 | v1 | u0
 	fstps	C(r_lzi1)				// lzi0 | u1 | v0 | v1 | u0
-	fxch	%st(1)
-	fsts	C(r_u1)
-	fxch	%st(1)
+	fxch	%st(1)					// u1 | lzi0 | v0 | v1 | u0
+	fsts	C(r_u1)					// u1 | lzi0 | v0 | v1 | u0
+	fxch	%st(1)					// lzi0 | ui | v0 | v1 | u0
 
 //	if (lzi0 > r_nearzi)	// for mipmap finding
 //		r_nearzi = lzi0;
