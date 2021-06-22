@@ -109,3 +109,7 @@ extern float	d_scalemip[3];
 
 extern void (*d_drawspans) (espan_t *pspan);
 
+#ifdef FIXED_POINT
+extern int		d_zistepu_fxp, d_zistepv_fxp, d_ziorigin_fxp;
+extern int		d_sdivzstepu_fxp, d_tdivzstepu_fxp, d_zistepu_fxp;
+#endif //FIXED_POINT

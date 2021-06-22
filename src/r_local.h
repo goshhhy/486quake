@@ -314,4 +314,8 @@ void R_ClipEdge (mvertex_t *pv0, mvertex_t *pv1, clipplane_t *clip);
 void R_SplitEntityOnNode2 (mnode_t *node);
 void R_MarkLights (dlight_t *light, int bit, mnode_t *node);
 
+#ifdef FIXED_POINT
+#include "fpm/r_fpm.h"
+#endif //FIXED_POINT
+
 #endif

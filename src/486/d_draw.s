@@ -88,7 +88,9 @@ LClampHigh5:
 #define pspans	4+16
 
 	.align 4
+#ifndef FIXED_POINT
 .globl C(D_DrawSpans8)
+#endif //FIXED_POINT
 C(D_DrawSpans8):
 	pushl	%ebp				// preserve caller's stack frame
 	pushl	%edi
@@ -743,7 +745,9 @@ LClampNeg:
 
 #define pzspans	4+16
 
+//#ifndef FIXED_POINT
 .globl C(D_DrawZSpans)
+//#endif //FIXED_POINT
 C(D_DrawZSpans):
 	pushl	%ebp				// preserve caller's stack frame
 	pushl	%edi

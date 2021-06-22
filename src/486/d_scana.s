@@ -27,6 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../asm_draw.h"
 #include "../d_ifacea.h"
 
+#ifndef FIXED_POINT
+
 #if id386
 
 	.data
@@ -87,3 +89,4 @@ Llp:
 
 #endif	// id386
 
+#endif // FIXED_POINT

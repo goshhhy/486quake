@@ -13,10 +13,10 @@ BUILDDIR ?= $(shell pwd)/build
 
 REVISION=5
 
-OLEVEL=O3
-OCPU=486
-OLTO=yes
-OASM=yes
+OLEVEL?=O3
+OCPU?=486
+OLTO?=yes
+OFPM?=no
 
 ifeq "$(OCPU)" "386"
     OARCH=i486
@@ -41,11 +41,12 @@ ifeq "$(OLTO)" "yes"
     BINNAME:=$(BINNAME)l
 endif
 
-ifneq "$(OASM)" "yes"
-    ID386=0
-    BINNAME:=$(BINNAME)c
+ID386=1
+ifeq "$(OFPM)" "yes"
+	FIXED="-DFIXED_POINT="
+    BINNAME:=$(BINNAME)-fpm
 else
-    ID386=1
+    FIXED=
 endif
 
 BUILD_DEBUG_DIR=debug$(ARCH)$(GLIBC)
@@ -55,7 +56,7 @@ CC=i586-pc-msdosdjgpp-gcc
 
 CC_VERSION=$(shell $(CC) --version | head -n 1 | awk -F " " '{print $3}')
 
-BASE_CFLAGS=-Dstricmp=strcasecmp -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
+BASE_CFLAGS=-Dstricmp=strcasecmp -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) $(FIXED) -DCCVERSION="\"$(CC_VERSION)\""
 RELEASE_CFLAGS=$(BASE_CFLAGS) -s -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
 								-fno-unwind-tables -fno-asynchronous-unwind-tables -funroll-loops \
 								-fno-stack-protector -fexpensive-optimizations $(LTOFLAGS)\
@@ -197,9 +198,13 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/snd_mixa.o \
 	$(BUILDDIR)/486quake/sys_dosa.o
     
-ifneq "$(OASM)" "yes"
+ifeq "$(OFPM)" "yes"
 486QUAKE_COBJS = \
-	$(BUILDDIR)/486quake/d_vars.o \
+	$(BUILDDIR)/486quake/fpm_d_scan.o \
+	$(BUILDDIR)/486quake/fpm_FixedPointMath.o \
+
+else
+486QUAKE_COBJS = \
 
 endif
 
@@ -458,6 +463,12 @@ $(BUILDDIR)/486quake/mplpc.o :$(SRC_DIR)/mplpc.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/dos_v2.o :  $(SRC_DIR)/dos_v2.c
+	$(DO_CC)
+
+$(BUILDDIR)/486quake/fpm_d_scan.o :   $(SRC_DIR)/fpm/d_scan.c
+	$(DO_CC)
+
+$(BUILDDIR)/486quake/fpm_FixedPointMath.o :   $(SRC_DIR)/fpm/FixedPointMath.c
 	$(DO_CC)
 
 #####
