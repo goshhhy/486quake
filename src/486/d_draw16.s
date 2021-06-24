@@ -170,18 +170,18 @@ LSpanLoop:
 //
 // now start the FDIV for the end of the span
 //
-	cmpl	$16,%ecx
-	ja		LSetupNotLast1
-
-	decl	%ecx
-	jz		LCleanup1		// if only one pixel, no need to start an FDIV
 
 // finish up the s and t calcs
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-		movl	%ecx,spancountminus1
 	fistpl	s				// z*64k | 1/z | t/z | s/z
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
+		cmpl	$16,%ecx
+		ja		LSetupNotLast1
+
+		decl	%ecx
+		jz		LCleanup1		// if only one pixel, no need to start an FDIV
+		movl	%ecx,spancountminus1
 	fistpl	t				// 1/z | t/z | s/z
 
 	fildl	spancountminus1		//														:: 9-12
@@ -202,21 +202,13 @@ LSpanLoop:
 	jmp		LFDIVInFlight1
 
 LCleanup1:
-// finish up the s and t calcs
-	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
-	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fistpl	s				// z*64k | 1/z | t/z | s/z
-	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
+// finish finishing up the s and t calcs
 	fistpl	t				// 1/z | t/z | s/z
 	jmp		LFDIVInFlight1
 
 	.align	4
 LSetupNotLast1:
-// finish up the s and t calcs
-	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
-	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
-	fistpl	s				// z*64k | 1/z | t/z | s/z
-	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
+// finish finishing up the s and t calcs
 	fistpl	t				// 1/z | t/z | s/z
 
 	fadds	zi16stepu		// 1/z adj | t/z | s/z
