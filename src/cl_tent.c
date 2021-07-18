@@ -324,7 +324,7 @@ CL_UpdateTEnts
 */
 void CL_UpdateTEnts (void)
 {
-	int			i;
+	int			i, j;
 	beam_t		*b;
 	vec3_t		dist, org;
 	float		d;
@@ -383,8 +383,8 @@ void CL_UpdateTEnts (void)
 			ent->angles[1] = yaw;
 			ent->angles[2] = rand()%360;
 
-			for (i=0 ; i<3 ; i++)
-				org[i] += dist[i]*30;
+			for (j=0 ; j<3 ; j++)
+				org[j] += dist[j]*30;
 			d -= 30;
 		}
 	}
