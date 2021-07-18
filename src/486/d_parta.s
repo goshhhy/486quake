@@ -69,21 +69,18 @@ C(D_DrawParticle):
 	fsubrs	pt_org(%edi) // local[0] | local[1] | local[2]		
 
 //	transformed[2] = DotProduct(local, r_ppn);		
-	flds	C(r_ppn)		// r_ppn[0] | local[0] | local[1] | local[2]
-	fmul	%st(1),%st(0)	// dot0 | local[0] | local[1] | local[2]
-	flds	C(r_ppn)+4	// r_ppn[1] | dot0 | local[0] | local[1] | local[2]
-	fmul	%st(3),%st(0)	// dot1 | dot0 | local[0] | local[1] | local[2]
-	flds	C(r_ppn)+8	// r_ppn[2] | dot1 | dot0 | local[0] |
-						//  local[1] | local[2]
-	fmul	%st(5),%st(0)	// dot2 | dot1 | dot0 | local[0] | local[1] | local[2]
-	faddp	%st(0),%st(1) // dot2 + dot1 | dot0 | local[0] | local[1] |
-						  //  local[2]
-	faddp	%st(0),%st(1) // z | local[0] | local[1] | local[2]
-	fld		%st(0)		// z | z | local[0] | local[1] | local[2]
+	fld		%st(0)			// local[0] | local[0] | local[1] | local[2]
+	fmuls	C(r_ppn)		// dot0 | local[0] | local[1] | local[2]
+	fld		%st(2)			// local[1] | dot0 | local[0] | local[1] | local[2]
+	fmuls	C(r_ppn)+4		// dot1 | dot0 | local[0] | local[1] | local[2]
+	fld		%st(4)			// local[2] | dot1 | dot0 | local[0] | local[1] | local[2]
+	fmuls	C(r_ppn)+8		// dot2 | dot1 | dot0 | local[0] | local[1] | local[2]
+	faddp	%st(0),%st(1) 	// dot2 + dot1 | dot0 | local[0] | local[1] | local[2]
+	faddp	%st(0),%st(1) 	// z | local[0] | local[1] | local[2]
 
 //	if (transformed[2] < PARTICLE_Z_CLIP)
 //		return;
-	fcomps	float_particle_z_clip		// z | local[0] | local[1] | local[2]
+	fcoms	float_particle_z_clip		// z | local[0] | local[1] | local[2]
 	fnstsw	%ax
 	fdivrs	float_1						// 1/z | local[0] | local[1] | local[2]
 	testb	$1,%ah
@@ -92,14 +89,14 @@ C(D_DrawParticle):
 	fxch	%st(3)						// local[2] | local[0] | local[1] | 1/z
 
 //	transformed[1] = DotProduct(local, r_pup);
-	flds	C(r_pup)					// r_pup[0] | local[2] | local[0] | local[1] | 1/z
-	fmul	%st(2),%st(0)				// dot0 | local[2] | local[0] | local[1] | 1/z 
-	flds	C(r_pup)+4					// r_pup[1] | dot0 | local[2] | local[0] | local[1] | 1/z 
-	fmul	%st(4),%st(0)	// dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
-	flds	C(r_pup)+8	// r_pup[2] | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
-	fmul	%st(3),%st(0)	// dot2 | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
-	faddp	%st(0),%st(1) // dot2 + dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
-	faddp	%st(0),%st(1) // y | local[2] | local[0] | local[1] | 1/z 
+	fld		%st(1)						// local[0] | local[2] | local[0] | local[1] | 1/z
+	fmuls	C(r_pup)					// dot0 | local[2] | local[0] | local[1] | 1/z 
+	fld		%st(3)						// local[1] | local[2] | local[0] | local[1] | 1/z 
+	fmuls	C(r_pup)+4					// dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
+	fld		%st(2)						// local[2] | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
+	fmuls	C(r_pup)+8					// dot2 | dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
+	faddp	%st(0),%st(1) 				// dot2 + dot1 | dot0 | local[2] | local[0] | local[1] | 1/z 
+	faddp	%st(0),%st(1) 				// y | local[2] | local[0] | local[1] | 1/z 
 
 // project and store y
 	fmul	%st(4),%st(0)	// y/z | local[2] | local[0] | local[1] | 1/z 
@@ -110,10 +107,7 @@ C(D_DrawParticle):
 //	transformed[0] = DotProduct(local, r_pright);
 
 	fmuls	C(r_pright)+8			// dot2 | local[0] | local[1] | 1/z
-
-//  have the cpu load v while fpu does the fmul 
-	movl	DP_v,%edx
-
+		movl	DP_v,%edx
 	fxch	%st(2)					// local[1] | local[0] | dot2 | 1/z
 	fmuls	C(r_pright)+4			// dot1 | local[0] | dot2 | 1/z
 	fxch	%st(1)					// local[0] | dot1 | dot2 | 1/z
