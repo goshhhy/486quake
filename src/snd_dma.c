@@ -134,7 +134,7 @@ S_Startup
 ================
 */
 
-void S_Startup (void)
+qboolean S_Startup (void)
 {
 	int		rc;
 
@@ -151,11 +151,12 @@ void S_Startup (void)
 			Con_Printf("S_Startup: SNDDMA_Init failed.\n");
 #endif
 			sound_started = 0;
-			return;
+			return false;
 		}
 	}
 
 	sound_started = 1;
+	return true;
 }
 
 
@@ -203,7 +204,10 @@ void S_Init (void)
 
 	snd_initialized = true;
 
-	S_Startup ();
+	if ( !S_Startup() ) {
+		snd_initialized = false;
+		return;
+	}
 
 	SND_InitScaletable ();
 
