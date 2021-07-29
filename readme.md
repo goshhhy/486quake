@@ -37,7 +37,6 @@ these benchmarks are all taken with default screen size and rendering settings.
 | AMD 5x86/133                  | 16.4          | 18.4          |
 | Intel 486DX4/100              | 9.6           | 10.9          |
 | Cyrix 486DX2/66               | 6.3           | 7.1           |
-| Pentium Overdrive 66MHz       | 1.1           | 2.2           |
 
 ## PC Chips M560 (Socket 7)
 * 128MiB Kingston SDRAM
