@@ -1,19 +1,51 @@
 486quake
 ========
 
-this is an attempt to ressurect the original Quake DOS sources, clean up the bitrot, build using modern compilers and optimizations, and rewrite the hand-tuned assembly with 486 machines in mind - to see just how fast quake can go.
+this repository contains a fork of the original Quake sources, with build support for MS-DOS restored.
 
-so far, i already consider it a mild success, and i still believe there to be much room for improvement.
+functionality remains almost identical. the primary goal is to re-optimize the assembly sources, focusing on non-pentium processors common in the mid-90s, such as the 486, Cyrix 6x86, and AMD K5/K6, focusing specifically on the 486 as a baseline.
+
+this is both for fun, and in the interest of exploring the question of whether these competitors might have been more dominant if Quake had not so strongly favored the Pentium.
+
+building
+========
+
+on a unix or posix-like host machine with a djgpp cross-compiler, source djgpp's environment script.
+
+then, from this source directory, you can just run
+
+    make
+
+this will build the standard 486quake binary by default.
+
+to build all binaries, you can run the `build_all.sh` script.
 
 results
 =======
 
-the following table lists some known results for 486quake on different machines. there is wide variation between different 486 machines even with the same cpu, so bear that in mind.
+the following tables list some known results for 486quake on different machines. there is wide variation between different boards even with the same cpu, so bear that in mind.
 
-these benchmarks are all taken with default settings for screen size and rendering settings.
+these benchmarks are all taken with default screen size and rendering settings.
 
-|         CPU                   |   486quake version    |  Stock FPS    | 486Quake FPS  |
-|         ---                   |          ---          |      ---      |      ---      |
-| AMD 5x86/133 (Evergreen, WT)  | 1.09 r4               | 10.7          | 12.0          |
-| Intel 486 Overdrive DX4/100   | 1.09 r4               | 9.6           | 10.9          |
-| Cyrix 486DX2/66               | 1.09 r4               | 6.3           | 7.1           |
+## PC Chips M919 (Socket 3)
+* 48MiB 60ns EDO RAM
+* S3 Trio64V+ 2MiB PCI
+* no L2 cache
+
+|         CPU                   |  Stock FPS    | 486quake r6   |
+|         ---                   |      ---      |      ---      |
+| AMD 5x86/133                  | 16.4          | 18.4          |
+| Intel 486DX4/100              | 9.6           | 10.9          |
+| Cyrix 486DX2/66               | 6.3           | 7.1           |
+| Pentium Overdrive 66MHz       | 1.1           | 2.2           |
+
+## PC Chips M560 (Socket 7)
+* 128MiB Kingston SDRAM
+* S3 Trio64V+ 2MiB PCI
+
+|         CPU                   |  Stock FPS    | 486quake r6   | 586quake r6   |
+|         ---                   |      ---      |      ---      |     ---       |
+| Pentium 133 (P54C)            | 35.6          | 39.6          | **41.0**      |
+| Cyrix 6x86MX PR166            | 26.3          | **30.3**      | 29.7          |
+| AMD K5 PR133                  | 25.8          | 28.9          | **29.0**      |
+| Cyrix 6x86L PR166             | 23.5          | **27.6**      | 27.1          |
