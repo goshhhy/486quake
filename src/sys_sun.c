@@ -335,7 +335,7 @@ int main (int argc, char **argv)
 
     // unroll the simulation loop to give the video side a chance to see _vid_default_mode
     Host_Frame( 0.1 );
-    VID_SetDefaultMode();
+    //VID_SetDefaultMode();
 
     oldtime = Sys_FloatTime();
     while (1)

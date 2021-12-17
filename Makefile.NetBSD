@@ -2,6 +2,8 @@
 # Quake Makefile for DOS
 #
 
+include common.mk
+
 ARCH=i386
 NOARCH=noarch
 
@@ -10,7 +12,7 @@ BUILDDIR ?= $(shell pwd)/build
 
 OLEVEL=O3
 OCPU=486
-OLTO=yes
+OLTO=no
 OASM=yes
 
 ifeq "$(OCPU)" "386"
@@ -116,14 +118,10 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/menu.o \
 	$(BUILDDIR)/486quake/mathlib.o \
 	$(BUILDDIR)/486quake/model.o \
-	$(BUILDDIR)/486quake/net_bw.o \
+	$(BUILDDIR)/486quake/net_bsd.o \
 	$(BUILDDIR)/486quake/net_dgrm.o \
-	$(BUILDDIR)/486quake/net_dos.o \
-    $(BUILDDIR)/486quake/net_ipx.o \
 	$(BUILDDIR)/486quake/net_loop.o \
 	$(BUILDDIR)/486quake/net_main.o \
-	$(BUILDDIR)/486quake/net_mp.o \
-	$(BUILDDIR)/486quake/net_ser.o \
 	$(BUILDDIR)/486quake/net_vcr.o \
 	$(BUILDDIR)/486quake/nonintel.o \
 	$(BUILDDIR)/486quake/pr_cmds.o \
@@ -154,21 +152,14 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/wad.o \
 	$(BUILDDIR)/486quake/world.o \
 	\
-	$(BUILDDIR)/486quake/dos_v2.o \
-	$(BUILDDIR)/486quake/cd_audio.o \
-	$(BUILDDIR)/486quake/sys_dos.o \
-	$(BUILDDIR)/486quake/in_dos.o \
-	$(BUILDDIR)/486quake/vid_dos.o \
-	$(BUILDDIR)/486quake/vid_vga.o \
-	$(BUILDDIR)/486quake/vid_ext.o \
-	$(BUILDDIR)/486quake/vregset.o \
+	$(BUILDDIR)/486quake/cd_null.o \
+	$(BUILDDIR)/486quake/sys_sun.o \
+	$(BUILDDIR)/486quake/in_null.o \
+	$(BUILDDIR)/486quake/vid_null.o \
 	$(BUILDDIR)/486quake/snd_dma.o \
 	$(BUILDDIR)/486quake/snd_mem.o \
 	$(BUILDDIR)/486quake/snd_mix.o \
-	$(BUILDDIR)/486quake/snd_dos.o \
-	$(BUILDDIR)/486quake/snd_gus.o \
-	$(BUILDDIR)/486quake/mplib.o \
-	$(BUILDDIR)/486quake/mplpc.o \
+	$(BUILDDIR)/486quake/snd_sun.o \
 	\
 	$(BUILDDIR)/486quake/d_copy.o \
 	$(BUILDDIR)/486quake/d_draw.o \
@@ -188,7 +179,6 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/worlda.o \
 	$(BUILDDIR)/486quake/r_aclipa.o \
 	$(BUILDDIR)/486quake/snd_mixa.o \
-	$(BUILDDIR)/486quake/sys_dosa.o
     
 ifneq "$(OASM)" "yes"
 486QUAKE_COBJS = \
@@ -294,7 +284,7 @@ $(BUILDDIR)/486quake/mathlib.o :  $(SRC_DIR)/mathlib.c
 $(BUILDDIR)/486quake/model.o :    $(SRC_DIR)/model.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/net_bw.o : $(SRC_DIR)/net_bw.c
+$(BUILDDIR)/486quake/net_bsd.o : $(SRC_DIR)/net_bsd.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/net_dgrm.o : $(SRC_DIR)/net_dgrm.c
@@ -417,7 +407,7 @@ $(BUILDDIR)/486quake/sys_sun.o :$(SRC_DIR)/sys_sun.c
 $(BUILDDIR)/486quake/in_null.o :$(SRC_DIR)/in_null.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/vid_svgalib.o:$(SRC_DIR)/vid_svgalib.c
+$(BUILDDIR)/486quake/vid_null.o:$(SRC_DIR)/vid_null.c
 	$(DO_O_CC)
 
 $(BUILDDIR)/486quake/vid_vga.o:$(SRC_DIR)/vid_vga.c
