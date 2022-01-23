@@ -56,7 +56,7 @@ qboolean SNDDMA_Init(void)
 
 	if (snd_inited) {
 		printf("Sound already init'd\n");
-		return;
+		return 1;
 	}
 
 	shm = &sn;
