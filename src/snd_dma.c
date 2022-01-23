@@ -139,7 +139,7 @@ qboolean S_Startup (void)
 	int		rc;
 
 	if (!snd_initialized)
-		return;
+		return false;
 
 	if (!fakedma)
 	{
