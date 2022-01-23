@@ -52,10 +52,10 @@ CC?=gcc
 
 CC_VERSION=$(shell $(CC) --version | head -n 1 | awk -F " " '{print $3}')
 
-BASE_CFLAGS=-Dstricmp=strcasecmp -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
+BASE_CFLAGS=-Dstricmp=strcasecmp -DNO_ASM_PREFIX -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
 RELEASE_CFLAGS=$(BASE_CFLAGS) -s -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
 								-fno-unwind-tables -fno-asynchronous-unwind-tables -funroll-loops \
-								-fno-stack-protector -fexpensive-optimizations $(LTOFLAGS)\
+								-fno-stack-protector -fexpensive-optimizations -fno-pie $(LTOFLAGS)\
 
 ifeq "$(OPROFILE)" "yes"
 BASE_CFLAGS+= -pg
@@ -64,7 +64,7 @@ endif
 DEBUG_CFLAGS=$(BASE_CFLAGS)
 CFLAGS?=$(BASE_CFLAGS) $(RELEASE_CFLAGS)
 
-LDFLAGS=-lm
+LDFLAGS=-lm -Wl,--no-as-needed
 
 DO_CC=$(CC) $(CFLAGS) -o $@ -c $<
 DO_DEBUG_CC=$(CC) $(DEBUG_CFLAGS) -o $@ -c $<
@@ -187,10 +187,10 @@ ifneq "$(OASM)" "yes"
 endif
 
 $(BUILDDIR)/$(BINNAME) : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
-	$(CC) $(RELEASE_CFLAGS) -o $@ $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS)
+	$(CC) $(RELEASE_CFLAGS) -o $@ -Wl,--start-group $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS) -Wl,--end-group
 
 $(BUILDDIR)/$(BINNAME).exe : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
-	$(CC) $(RELEASE_CFLAGS) -o $@ $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS)
+	$(CC) $(RELEASE_CFLAGS) -o $@ -Wl,--start-group $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS) -Wl,--end-group
 
 ####
 
