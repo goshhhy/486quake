@@ -455,3 +455,6 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 
 }
 
+void Sys_SendKeyEvents (void)
+{
+}
