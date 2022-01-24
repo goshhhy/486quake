@@ -45,6 +45,9 @@ these benchmarks are all taken with default screen size and rendering settings.
 |         CPU                   |  Stock FPS    | 486quake r6   | 586quake r6   |
 |         ---                   |      ---      |      ---      |     ---       |
 | Pentium 133 (P54C)            | 35.6          | 39.6          | **41.0**      |
+| AMD K6/166                    | 32.5 |        | **37.8**      | 36.9          |
+| AMD K6/133                    | 28.5          | **33.0**      | 32.2          |
 | Cyrix 6x86MX PR166            | 26.3          | **30.3**      | 29.7          |
 | AMD K5 PR133                  | 25.8          | 28.9          | **29.0**      |
+| Cyrix 6x86 PR166              | 23.9          | **27.9**      | 27.1          |
 | Cyrix 6x86L PR166             | 23.5          | **27.6**      | 27.1          |
