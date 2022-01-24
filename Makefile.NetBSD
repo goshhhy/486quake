@@ -14,6 +14,7 @@ OLEVEL=O3
 OCPU=486
 OLTO=no
 OASM=yes
+OPROFILE=yes
 
 ifeq "$(OCPU)" "386"
     OARCH=i486
@@ -53,9 +54,9 @@ CC?=gcc
 CC_VERSION=$(shell $(CC) --version | head -n 1 | awk -F " " '{print $3}')
 
 BASE_CFLAGS=-Dstricmp=strcasecmp -DNO_ASM_PREFIX -DSUBARCH=$(OCPU) -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
-RELEASE_CFLAGS=$(BASE_CFLAGS) -s -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
+RELEASE_CFLAGS=$(BASE_CFLAGS) -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
 								-fno-unwind-tables -fno-asynchronous-unwind-tables -funroll-loops \
-								-fno-stack-protector -fexpensive-optimizations -fno-pie $(LTOFLAGS)\
+								-fno-stack-protector -fno-pie $(LTOFLAGS)\
 
 ifeq "$(OPROFILE)" "yes"
 BASE_CFLAGS+= -pg
@@ -123,6 +124,7 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/net_loop.o \
 	$(BUILDDIR)/486quake/net_main.o \
 	$(BUILDDIR)/486quake/net_vcr.o \
+	$(BUILDDIR)/486quake/net_udp.o \
 	$(BUILDDIR)/486quake/nonintel.o \
 	$(BUILDDIR)/486quake/pr_cmds.o \
 	$(BUILDDIR)/486quake/pr_edict.o \
@@ -179,7 +181,8 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/worlda.o \
 	$(BUILDDIR)/486quake/r_aclipa.o \
 	$(BUILDDIR)/486quake/snd_mixa.o \
-    
+ 	$(BUILDDIR)/486quake/sys_dosa.o   
+ 
 ifneq "$(OASM)" "yes"
 486QUAKE_COBJS = \
 	$(BUILDDIR)/486quake/d_vars.o \
@@ -488,6 +491,9 @@ $(BUILDDIR)/486quake/r_aclipa.o : $(SRC_DIR)/$(OCPU)/r_aclipa.s
 	$(DO_AS)
 
 $(BUILDDIR)/486quake/snd_mixa.o : $(SRC_DIR)/snd_mixa.s
+	$(DO_AS)
+
+$(BUILDDIR)/486quake/sys_dosa.o : $(SRC_DIR)/sys_dosa.s
 	$(DO_AS)
 
 #############################################################################

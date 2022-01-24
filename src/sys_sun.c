@@ -311,6 +311,11 @@ void Sys_Init(void)
 #endif
 }
 
+
+void Sys_SendKeyEvents (void)
+{
+}
+
 //=============================================================================
 
 int main (int argc, char **argv)
