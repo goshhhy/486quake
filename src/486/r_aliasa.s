@@ -109,24 +109,22 @@ Lloop:
 
 	leal	(%edx,%edx,2),%eax	// index*3
 
-	fxch	%st(3)				// v[0] | v[2] | v[1] | zi
+// FIXME: store zi instead? then fmul by mem32 (save 4+ cycles) 
+	fsts	ftmp
+	fistpl	fv_v+20(%edi)		// v[2] | v[1] | v[0]
+	//fxch	%st(3)				// v[0] | v[2] | v[1] | zi
 
 //		lightcos = DotProduct (plightnormal, r_plightvec);
+	fld		%st(2)				 // v[0] | v[2] | v[1] | v[0]
+	fmuls	C(aliastransform)+0  // xaccum | v[2] | v[1] | v[0]
 	flds	C(r_avertexnormals)(,%eax,4)
 	fmuls	C(r_plightvec)
 	flds	C(r_avertexnormals)+4(,%eax,4)
 	fmuls	C(r_plightvec)+4
 	flds	C(r_avertexnormals)+8(,%eax,4)
 	fmuls	C(r_plightvec)+8
-	fxch	%st(1)
-	faddp	%st(0),%st(2)
-	fld		%st(2)				 // v[0] | laccum | laccum2 | v[0] | v[2] |
-								 //  v[1] | zi
-	fmuls	C(aliastransform)+0  // xaccum | laccum | laccum2 | v[0] | v[2] |
-								 //  v[1] | zi
-	fxch	%st(2)				 // laccum2 | laccum | xaccum | v[0] | v[2] |
-								 //  v[1] | zi
-	faddp	%st(0),%st(1)		 // laccum | xaccum | v[0] | v[2] | v[1] | zi
+	faddp	%st(0),%st(2)	     // laccum | laccum2 | xaccum | v[2] | v[1] | v[0]
+	faddp	%st(0),%st(1)		 // laccum | xaccum | v[2] | v[1] | v[0]
 
 //		temp = r_ambientlight;
 //		if (lightcos < 0)
@@ -165,59 +163,34 @@ Lp1:
 //		fv->v[1] = ((DotProduct(pverts->v, aliastransform[1]) +
 //				aliastransform[1][3]) * zi) + aliasycenter;
 //		fv->v[5] = zi;
-	fxch	%st(1)				 // v[0] | xaccum | v[2] | v[1] | zi
-	fmuls	C(aliastransform)+16 // yaccum | xaccum | v[2] | v[1] | zi
-	fxch	%st(3)				 // v[1] | xaccum | v[2] | yaccum | zi
-	fld		%st(0)				 // v[1] | v[1] | xaccum | v[2] | yaccum | zi
-	fmuls	C(aliastransform)+4	 // xaccum2 | v[1] | xaccum | v[2] | yaccum |zi
-	fxch	%st(1)				 // v[1] | xaccum2 | xaccum | v[2] | yaccum |zi
-	movl	%eax,fv_v+16(%edi)
-	fmuls	C(aliastransform)+20 // yaccum2 | xaccum2 | xaccum | v[2] | yaccum|
-								 //  zi
-	fxch	%st(2)				 // xaccum | xaccum2 | yaccum2 | v[2] | yaccum|
-								 //  zi
-	fadds	C(aliastransform)+12 // xaccum | xaccum2 | yaccum2 | v[2] | yaccum|
-								 //  zi
-	fxch	%st(4)				 // yaccum | xaccum2 | yaccum2 | v[2] | xaccum|
-								 //  zi
-	fadds	C(aliastransform)+28 // yaccum | xaccum2 | yaccum2 | v[2] | xaccum|
-								 //  zi
-	fxch	%st(3)				 // v[2] | xaccum2 | yaccum2 | yaccum | xaccum|
-								 //  zi
-	fld		%st(0)				 // v[2] | v[2] | xaccum2 | yaccum2 | yaccum |
-								 //  xaccum | zi
-	fmuls	C(aliastransform)+8	 // xaccum3 | v[2] | xaccum2 | yaccum2 |yaccum|
-								 //  xaccum | zi
-	fxch	%st(1)				 // v[2] | xaccum3 | xaccum2 | yaccum2 |yaccum|
-								 //  xaccum | zi
-	fmuls	C(aliastransform)+24 // yaccum3 | xaccum3 | xaccum2 | yaccum2 |
-								 // yaccum | xaccum | zi
-	fxch	%st(5)				 // xaccum | xaccum3 | xaccum2 | yaccum2 |
-								 // yaccum | yaccum3 | zi
-	faddp	%st(0),%st(2)		 // xaccum3 | xaccum | yaccum2 | yaccum |
-								 //  yaccum3 | zi
-	fxch	%st(3)				 // yaccum | xaccum | yaccum2 | xaccum3 |
-								 //  yaccum3 | zi
-	faddp	%st(0),%st(2)		 // xaccum | yaccum | xaccum3 | yaccum3 | zi
-	addl	$(tv_size),%esi
-	faddp	%st(0),%st(2)		 // yaccum | x | yaccum3 | zi
-	faddp	%st(0),%st(2)		 // x | y | zi
-	addl	$(stv_size),%ebp
-	fmul	%st(2),%st(0)		 // x/z | y | zi
-	fxch	%st(1)				 // y | x/z | zi
-	fmul	%st(2),%st(0)		 // y/z | x/z | zi
-	fxch	%st(1)				 // x/z | y/z | zi
-	fadds	C(aliasxcenter)		 // u | y/z | zi
-	fxch	%st(1)				 // y/z | u | zi
-	fadds	C(aliasycenter)		 // v | u | zi
-	fxch	%st(2)				 // zi | u | v
 // FIXME: fast float->int conversion?
-	fistpl	fv_v+20(%edi)		 // u | v
-	fistpl	fv_v+0(%edi)		 // v
-	fistpl	fv_v+4(%edi)
+								 // xaccum | v[2] | v[1] | v[0]
+ 	fadds	C(aliastransform)+12 // xaccum+ | v[2] | v[1] | v[0]
+	fxch	%st(3)				 // v[0] | v[2] | v[1] | xaccum+
 
+	fmuls	C(aliastransform)+16 // yaccum | v[2] | v[1] | xaccum+
+			movl	%eax,fv_v+16(%edi)
+	fadds	C(aliastransform)+28 // yaccum+ | v[2] | v[1] | xaccum+
+	fld		%st(2)				 // v[1] | yaccum+ | v[2] | v[1] | xaccum+
+	fmuls	C(aliastransform)+20 // yaccum2 | yaccum+ | v[2] | v[1] | xaccum+
+	fld		%st(2)				 // v[2] | yaccum2 | yaccum+ | v[2] | v[1] | xaccum+
+	fmuls	C(aliastransform)+24 // yaccum3 | yaccum2 | yaccum+ | v[2] | v[1] | xaccum+
+	faddp   %st(0),%st(2)		 // yaccum2 | yaccum3+ | v[2] | v[1] | xaccum+
+	faddp   %st(0),%st(1)		 // y | v[2] | v[1] | xaccum+
+	fmuls	ftmp		 		 // y/z | v[2] | v[1] | xaccum+
+	fadds	C(aliasycenter)		 // v | v[2] | v[1] | xaccum+
+	fistpl	fv_v+4(%edi)		 // v[2] | v[1] | xaccum+
+
+	fmuls	C(aliastransform)+8	 // xaccum3 | v[1] | xaccum+
+	faddp   %st(0),%st(2)		 // v[1] | xaccum3+
+	fmuls	C(aliastransform)+4  // xaccum2 | xaccum3+
+	faddp   %st(0),%st(1)		 // x
+	fmuls	ftmp		 		 // x/z
+		addl	$(tv_size),%esi
+		addl	$(stv_size),%ebp
+	fadds	C(aliasxcenter)		 // u
+	fistpl	fv_v+0(%edi)	
 //	}
-
 	addl	$(fv_size),%edi
 	decl	%ecx
 	jnz		Lloop
