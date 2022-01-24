@@ -74,49 +74,42 @@ LDoForward:
 	movl	$2,%eax
 
 	fdivp	%st(0),%st(1)					// scale
+// takes 7 cycles to write scale to ftmp, but saves 5 cycles per fmul + 3 cycles for later `fstp %st(0)` = 18 cycles, net 11 saved
+	fstps	ftmp	
 
 LDo3Forward:
-	fildl	fv_v+0(%esi)	// fv0v0 | scale
-	fildl	fv_v+0(%edi)	// fv1v0 | fv0v0 | scale
-	fildl	fv_v+4(%esi)	// fv0v1 | fv1v0 | fv0v0 | scale
-	fildl	fv_v+4(%edi)	// fv1v1 | fv0v1 | fv1v0 | fv0v0 | scale
-	fildl	fv_v+8(%esi)	// fv0v2 | fv1v1 | fv0v1 | fv1v0 | fv0v0 | scale
-	fildl	fv_v+8(%edi)	// fv1v2 | fv0v2 | fv1v1 | fv0v1 | fv1v0 | fv0v0 | scale
-	fxch	%st(5)			// fv0v0 | fv0v2 | fv1v1 | fv0v1 | fv1v0 | fv1v2 | scale
-	fsubr	%st(0),%st(4)	// fv0v0 | fv0v2 | fv1v1 | fv0v1 | fv1v0-fv0v0 | fv1v2 | scale
-	fxch	%st(3)			// fv0v1 | fv0v2 | fv1v1 | fv0v0 | fv1v0-fv0v0 | fv1v2 | scale
-	fsubr	%st(0),%st(2)	// fv0v1 | fv0v2 | fv1v1-fv0v1 | fv0v0 | fv1v0-fv0v0 | fv1v2 | scale
-	fxch	%st(1)			// fv0v2 | fv0v1 | fv1v1-fv0v1 | fv0v0 | fv1v0-fv0v0 | fv1v2 | scale
-	fsubr	%st(0),%st(5)	// fv0v2 | fv0v1 | fv1v1-fv0v1 | fv0v0 | fv1v0-fv0v0 | fv1v2-fv0v2 | scale
-	fxch	%st(6)			// scale | fv0v1 | fv1v1-fv0v1 | fv0v0 | fv1v0-fv0v0 | fv1v2-fv0v2 | fv0v2
-	fmul	%st(0),%st(4)	// scale | fv0v1 | fv1v1-fv0v1 | fv0v0 | (fv1v0-fv0v0)*scale | fv1v2-fv0v2 | fv0v2
-	addl	$12,%edi
-	fmul	%st(0),%st(2)	// scale | fv0v1 | (fv1v1-fv0v1)*scale | fv0v0 | (fv1v0-fv0v0)*scale | fv1v2-fv0v2 | fv0v2
-	addl	$12,%esi
-	addl	$12,%edx
-	fmul	%st(0),%st(5)	// scale | fv0v1 | (fv1v1-fv0v1)*scale | fv0v0 | (fv1v0-fv0v0)*scale | (fv1v2-fv0v2)*scale | fv0v2
-	fxch	%st(3)			// fv0v0 | fv0v1 | (fv1v1-fv0v1)*scale | scale | (fv1v0-fv0v0)*scale | (fv1v2-fv0v2)*scale | fv0v2
-	faddp	%st(0),%st(4)	// fv0v1 | (fv1v1-fv0v1)*scale | scale | fv0v0+(fv1v0-fv0v0)*scale | (fv1v2-fv0v2)*scale | fv0v2
-	faddp	%st(0),%st(1)	// fv0v1+(fv1v1-fv0v1)*scale | scale | fv0v0+(fv1v0-fv0v0)*scale | (fv1v2-fv0v2)*scale | fv0v2
-	fxch	%st(4)			// fv0v2 | scale | fv0v0+(fv1v0-fv0v0)*scale | (fv1v2-fv0v2)*scale | fv0v1+(fv1v1-fv0v1)*scale
-	faddp	%st(0),%st(3)	// scale | fv0v0+(fv1v0-fv0v0)*scale | fv0v2+(fv1v2-fv0v2)*scale | fv0v1+(fv1v1-fv0v1)*scale
-	fxch	%st(1)			// fv0v0+(fv1v0-fv0v0)*scale | scale |  fv0v2+(fv1v2-fv0v2)*scale | fv0v1+(fv1v1-fv0v1)*scale
+	fildl	fv_v+0(%esi)	// fv0v0
+	fildl	fv_v+0(%edi)	// fv1v0 | fv0v0
+	fsub	%st(1),%st(0)	// fv1v0-fv0v0 | fv0v0
+	fmuls	ftmp			// (fv1v0-fv0v0)*scale | fv0v0
+	faddp	%st(0), %st(1)	// fv0v0+(fv1v0-fv0v0)*scale
 	fadds	float_point5
-	fxch	%st(3)			// fv0v1+(fv1v1-fv0v1)*scale | scale | fv0v2+(fv1v2-fv0v2)*scale | fv0v0+(fv1v0-fv0v0)*scale
+
+	fildl	fv_v+4(%esi)	// fv0v1 | 
+	fildl	fv_v+4(%edi)	// fv1v1 | fv0v1 | fv0v0+(fv1v0-fv0v0)*scale
+	fsub	%st(1),%st(0)	// fv1v1-fv0v1 | fv0v1 | fv0v0+(fv1v0-fv0v0)*scale
+	fmuls	ftmp			// (fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+	faddp	%st(0), %st(1)	// fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
 	fadds	float_point5
-	fxch	%st(2)			// fv0v2+(fv1v2-fv0v2)*scale | scale | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+
+	fildl	fv_v+8(%esi)	// fv0v2 | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+	fildl	fv_v+8(%edi)	// fv1v2 | fv0v2 | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+	fsub	%st(1),%st(0)	// fv1v2-fv0v2 | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+	fmuls	ftmp			// (fv1v2-fv0v2)*scale | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+		addl	$12,%edi
+		addl	$12,%esi
+		addl	$12,%edx
+	faddp	%st(0), %st(1)	// fv0v2+(fv1v2-fv0v2)*scale | fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
 	fadds	float_point5
-	fxch	%st(3)			// fv0v0+(fv1v0-fv0v0)*scale | scale | fv0v1+(fv1v1-fv0v1)*scale | //  fv0v2+(fv1v2-fv0v2)*scale
-	fistpl	fv_v+0-12(%edx)	// scale | fv0v1+(fv1v1-fv0v1)*scale | fv0v2+(fv1v2-fv0v2)*scale
-	fxch	%st(1)			// fv0v1+(fv1v1-fv0v1)*scale | scale | fv0v2+(fv1v2-fv0v2)*scale | scale
-	fistpl	fv_v+4-12(%edx)	// scale | fv0v2+(fv1v2-fv0v2)*scale
-	fxch	%st(1)			// fv0v2+(fv1v2-fv0v2)*sc | scale
-	fistpl	fv_v+8-12(%edx)	// scale
+	
+	fistpl	fv_v+8-12(%edx) // fv0v1+(fv1v1-fv0v1)*scale | fv0v0+(fv1v0-fv0v0)*scale
+	fistpl	fv_v+4-12(%edx) // fv0v0+(fv1v0-fv0v0)*scale
+	fistpl	fv_v+0-12(%edx)
 
 	decl	%eax
 	jnz		LDo3Forward
 
-	fstp	%st(0)
+	//fstp	%st(0)
 
 	popl	%edi
 	popl	%esi
