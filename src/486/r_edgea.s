@@ -458,44 +458,22 @@ Lsortloop:
 	subl	$0xFFFFF,%eax
 	movl	%eax,Ltemp
 	fildl	Ltemp
-
-	fmuls	float_1_div_0100000h // fu = (float)(edge->u - 0xFFFFF) *
-								//      (1.0 / 0x100000);
-
+	fmuls	float_1_div_0100000h // fu = (float)(edge->u - 0xFFFFF) *      (1.0 / 0x100000);
 	fld		%st(0)				// fu | fu
 	fmuls	st_d_zistepu(%edi)	// fu*surf->d_zistepu | fu
-	flds	C(fv)					// fv | fu*surf->d_zistepu | fu
-	fmuls	st_d_zistepv(%edi)	// fv*surf->d_zistepv | fu*surf->d_zistepu | fu
-	fxch	%st(1)				// fu*surf->d_zistepu | fv*surf->d_zistepv | fu
-	fadds	st_d_ziorigin(%edi)	// fu*surf->d_zistepu + surf->d_ziorigin |
-								//  fv*surf->d_zistepv | fu
+	fadds	st_d_ziorigin(%edi)	// fu*surf->d_zistepu + surf->d_ziorigin | fu
+	flds	C(fv)				// fv | fu*surf->d_zistepu + surf->d_ziorigin  | fu
+	fmuls	st_d_zistepv(%edi)	// fv*surf->d_zistepv | fu*surf->d_zistepu + surf->d_ziorigin  | fu
+	faddp	%st(0),%st(1)		// newzi | fu
 
-	flds	st_d_zistepu(%esi)	// surf2->d_zistepu |
-								//  fu*surf->d_zistepu + surf->d_ziorigin |
-								//  fv*surf->d_zistepv | fu
-	fmul	%st(3),%st(0)		// fu*surf2->d_zistepu |
-								//  fu*surf->d_zistepu + surf->d_ziorigin |
-								//  fv*surf->d_zistepv | fu
-	fxch	%st(1)				// fu*surf->d_zistepu + surf->d_ziorigin |
-								//  fu*surf2->d_zistepu |
-								//  fv*surf->d_zistepv | fu
-	faddp	%st(0),%st(2)		// fu*surf2->d_zistepu | newzi | fu
-
-	flds	C(fv)					// fv | fu*surf2->d_zistepu | newzi | fu
-	fmuls	st_d_zistepv(%esi)	// fv*surf2->d_zistepv |
-								//  fu*surf2->d_zistepu | newzi | fu
-	fld		%st(2)				// newzi | fv*surf2->d_zistepv |
-								//  fu*surf2->d_zistepu | newzi | fu
-	fmuls	float_point_999		// newzibottom | fv*surf2->d_zistepv |
-								//  fu*surf2->d_zistepu | newzi | fu
-
-	fxch	%st(2)				// fu*surf2->d_zistepu | fv*surf2->d_zistepv |
-								//  newzibottom | newzi | fu
-	fadds	st_d_ziorigin(%esi)	// fu*surf2->d_zistepu + surf2->d_ziorigin |
-								//  fv*surf2->d_zistepv | newzibottom | newzi |
-								//  fu
-	faddp	%st(0),%st(1)		// testzi | newzibottom | newzi | fu
-	fxch	%st(1)				// newzibottom | testzi | newzi | fu
+	flds	st_d_zistepu(%esi)	// surf2->d_zistepu | newzi | fu
+	fmul	%st(3),%st(0)		// fu*surf2->d_zistepu | newzi | fu
+	fadds	st_d_ziorigin(%esi)	// fu*surf2->d_zistepu + surf2->d_ziorigin | newzi | fu
+	flds	C(fv)				// fv | fu*surf2->d_zistepu + surf2->d_ziorigin| newzi | fu
+	fmuls	st_d_zistepv(%esi)	// fv*surf2->d_zistepv |  fu*surf2->d_zistepu + surf2->d_ziorigin | newzi | fu
+	faddp	%st(0),%st(1)		// testzi | newzi | fu
+	fld		%st(1)				// newzi | testzi | newzi | fu
+	fmuls	float_point_999		// newzibottom | testzi | newzi | fu
 
 // if (newzibottom >= testzi)
 //     goto Lgotposition;
@@ -648,8 +626,7 @@ Lzcheck_for_newtop:
 	movl	%eax,Ltemp
 	fildl	Ltemp
 
-	fmuls	float_1_div_0100000h // fu = (float)(edge->u - 0xFFFFF) *
-								//      (1.0 / 0x100000);
+	fmuls	float_1_div_0100000h // fu = (float)(edge->u - 0xFFFFF) * (1.0 / 0x100000);
 
 	fld		%st(0)				// fu | fu
 	fmuls	st_d_zistepu(%edi)	// fu*surf->d_zistepu | fu
