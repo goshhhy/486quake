@@ -127,37 +127,33 @@ LSpanLoop:
 // initial s and t values
 //
 // FIXME: pipeline FILD?
-	fildl	espan_t_v(%ebx)     // dv                                                   :: 9-12
+//																						:: START
+	fildl	espan_t_v(%ebx)     // dv                                                   :: 9-12 : 4 (2-4)
 	fsts	ftmp				// dv													:: 7
-	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv 				                        :: 11
-    fildl	espan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12
+	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv 				                        :: 11	: 8
+    fildl	espan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12 : 4 (2-4)
 	fsts	ftmp2				// du | dv*d_sdivzstepv									:: 7
-	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv 			        :: 11
-	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv 			        :: 8-20
-	fadds	C(d_sdivzorigin)	// s/z 			                                     	:: 8-20
+	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv 			        :: 11	: 8
+	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv 			        :: 8-20	: 7
+	fadds	C(d_sdivzorigin)	// s/z 			                                     	:: 8-20	: 7
 
 	fld		C(d_tdivzstepv)		// d_tdivzstepv | s/z 			                        :: 3
-	fmuls	ftmp				// dv*d_tdivzstepv | s/z  			                    :: 11
+	fmuls	ftmp				// dv*d_tdivzstepv | s/z  			                    :: 11	: 8
 	fld		C(d_tdivzstepu)		// d_tdivzstepu | dv*d_tdivzstepv | s/z                 :: 3
-	fmuls	ftmp2				// du*d_tdivzstepu | dv*d_tdivzstepv | s/z    			:: 11
-	faddp	%st(0),%st(1)		// du*d_tdivzstepu + dv*d_tdivzstepv | s/z				:: 8-20
-	fadds	C(d_tdivzorigin)	// t/z | s/z 											:: 8-20
+	fmuls	ftmp2				// du*d_tdivzstepu | dv*d_tdivzstepv | s/z    			:: 11	: 8
+	faddp	%st(0),%st(1)		// du*d_tdivzstepu + dv*d_tdivzstepv | s/z				:: 8-20	: 7
+	fadds	C(d_tdivzorigin)	// t/z | s/z 											:: 8-20	: 7
 
 	fld		C(d_zistepv)		// d_zistepv | t/z | s/z                        		:: 3
-	fmuls	ftmp				// dv*d_zistepv | t/z | s/z								:: 11
+	fmuls	ftmp				// dv*d_zistepv | t/z | s/z								:: 11	: 8
 	fld		C(d_zistepu)		// d_zistepu | dv*d_zistepv | t/z | s/z					:: 3
-	fmuls	ftmp2				// du*d_zistepu | dv*d_zistepv | t/z | s/z              :: 11
-	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv | t/z | s/z             	:: 8-20
-	fadds	C(d_ziorigin)		// 1/z | t/z | s/z                                      :: 8-20
-                                //                                                      :: TOTAL 158-236
+	fmuls	ftmp2				// du*d_zistepu | dv*d_zistepv | t/z | s/z              :: 11	: 8
+	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv | t/z | s/z             	:: 8-20	: 7
+	fadds	C(d_ziorigin)		// 1/z | t/z | s/z                                      :: 8-20	: 7
 
-	flds	fp_64k				// fp_64k | 1/z | t/z | s/z
-
-//
+	flds	fp_64k				// fp_64k | 1/z | t/z | s/z								:: 3
 // calculate and clamp s & t
-//
-	fdiv	%st(1),%st(0)		// z*64k | 1/z | t/z | s/z
-	
+	fdiv	%st(1),%st(0)		// z*64k | 1/z | t/z | s/z								:: 73 	: 70
 	/*
 	//	... what the fuck?!?!?!
 	fsts	ftmp				// 1/z | t/z | s/z
@@ -167,26 +163,24 @@ LSpanLoop:
 	flds	ftmp				// z*64k | 1/z | t/z | s/z
 	// ... :)
 	*/
-
-//
 // point %edi to the first pixel in the span
-//
-		movl	C(d_viewbuffer),%ecx
-		movl	espan_t_v(%ebx),%eax
-		movl	%ebx,pspantemp	// preserve spans pointer
+		movl	C(d_viewbuffer),%ecx												//	:: 1
+		movl	espan_t_v(%ebx),%eax												// 	:: 1
+		movl	%ebx,pspantemp	// preserve spans pointer							//	:: 1
 
-		movl	C(tadjust),%edx
-		movl	C(sadjust),%esi
-		movl	C(d_scantable)(,%eax,4),%edi	// v * screenwidth
-		addl	%ecx,%edi
-		movl	espan_t_u(%ebx),%ecx
-		addl	%ecx,%edi				// pdest = &pdestspan[scans->u];
-		movl	espan_t_count(%ebx),%ecx
+		movl	C(tadjust),%edx														//	:: 1
+		movl	C(sadjust),%esi														//	:: 1
+		movl	C(d_scantable)(,%eax,4),%edi	// v * screenwidth						:: 1
+		addl	%ecx,%edi															//	:: 1
+		movl	espan_t_u(%ebx),%ecx												//	:: 1
+		addl	%ecx,%edi				// pdest = &pdestspan[scans->u];				:: 1
+		movl	espan_t_count(%ebx),%ecx											//	:: 1
+                                //                                                      :: TOTAL 234-312
+								//														::		10 of 168 concurrent cycles filled
 
 //
 // now start the FDIV for the end of the span
 //
-
 // finish up the s and t calcs
 	fld		%st(0)			// z*64k | z*64k | 1/z | t/z | s/z
 	fmul	%st(4),%st(0)	// s | z*64k | 1/z | t/z | s/z
@@ -469,7 +463,7 @@ LSetUp1:
 	pop		%eax
 	flds	ftmp				// z*64k | 1/z | t/z | s/z
 	*/
-	
+
 	jmp		LFDIVInFlight2
 
 	.align	4
