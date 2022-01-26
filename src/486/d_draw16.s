@@ -98,23 +98,28 @@ C(D_DrawSpans16):
 // set up scaled-by-16 steps, for 16-long segments; also set up cacheblock
 // and span list pointers
 //
-// TODO: any overlap from rearranging?
-		flds	C(d_sdivzstepu)
-		fmuls	fp_16
 	pushl	%ebp				// preserve caller's stack frame
 	pushl	%edi
 	pushl	%esi				// preserve register variables
 	pushl	%ebx
 	movl	C(cacheblock),%edx
-		flds	C(d_tdivzstepu)
-		fmuls	fp_16
 	movl	pspans(%esp),%ebx	// point to the first span descriptor
-		flds	C(d_zistepu)
-		fmuls	fp_16
-	movl	%edx,pbase			// pbase = cacheblock
-		fstps	zi16stepu
-		fstps	tdivz16stepu
-		fstps	sdivz16stepu
+	movl	%edx,pbase			// pbase = 
+	
+	//	this was originally on fpu, but doing it in integer is faster
+	
+	// sdivz16stepu = d_sdivzstepu * 16.0
+	movl    $0x2000000, %eax
+	addl    C(d_sdivzstepu), %eax
+    movl    %eax, sdivz16stepu
+	// tdivz16stepu = d_tdivzstepu * 16.0
+	movl    $0x2000000, %eax
+	addl    C(d_tdivzstepu), %eax
+    movl    %eax, tdivz16stepu
+	// zi16stepu = d_zistepu * 16.0
+	movl    $0x2000000, %eax
+	addl    C(d_zistepu), %eax
+    movl    %eax, zi16stepu
 
 LSpanLoop:
 //
@@ -147,25 +152,36 @@ LSpanLoop:
                                 //                                                      :: TOTAL 158-236
 
 	flds	fp_64k				// fp_64k | 1/z | t/z | s/z
+
 //
 // calculate and clamp s & t
 //
 	fdiv	%st(1),%st(0)		// z*64k | 1/z | t/z | s/z
+	
+	/*
+	//	... what the fuck?!?!?!
+	fsts	ftmp				// 1/z | t/z | s/z
+	movl	$0x86ef72e6,%eax
+	subl	ftmp,%eax 
+	movl	%eax, ftmp
+	flds	ftmp				// z*64k | 1/z | t/z | s/z
+	// ... :)
+	*/
 
 //
 // point %edi to the first pixel in the span
 //
-	movl	C(d_viewbuffer),%ecx
-	movl	espan_t_v(%ebx),%eax
-	movl	%ebx,pspantemp	// preserve spans pointer
+		movl	C(d_viewbuffer),%ecx
+		movl	espan_t_v(%ebx),%eax
+		movl	%ebx,pspantemp	// preserve spans pointer
 
-	movl	C(tadjust),%edx
-	movl	C(sadjust),%esi
-	movl	C(d_scantable)(,%eax,4),%edi	// v * screenwidth
-	addl	%ecx,%edi
-	movl	espan_t_u(%ebx),%ecx
-	addl	%ecx,%edi				// pdest = &pdestspan[scans->u];
-	movl	espan_t_count(%ebx),%ecx
+		movl	C(tadjust),%edx
+		movl	C(sadjust),%esi
+		movl	C(d_scantable)(,%eax,4),%edi	// v * screenwidth
+		addl	%ecx,%edi
+		movl	espan_t_u(%ebx),%ecx
+		addl	%ecx,%edi				// pdest = &pdestspan[scans->u];
+		movl	espan_t_count(%ebx),%ecx
 
 //
 // now start the FDIV for the end of the span
@@ -199,6 +215,15 @@ LSpanLoop:
 	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
+
+	/*
+	fsts	ftmp				// 1/z | t/z | s/z
+	movl	$0x86ef72e6,%eax
+	subl	ftmp,%eax 
+	movl	%eax, ftmp
+	flds	ftmp				// z*64k | 1/z | t/z | s/z
+	*/
+
 	jmp		LFDIVInFlight1
 
 LCleanup1:
@@ -220,6 +245,14 @@ LSetupNotLast1:
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
 							//  overlap
+	/*
+	fsts	ftmp				// 1/z | t/z | s/z
+	movl	$0x86ef72e6,%eax
+	subl	ftmp,%eax 
+	movl	%eax, ftmp
+	flds	ftmp				// z*64k | 1/z | t/z | s/z
+	*/
+
 LFDIVInFlight1:
 
 	addl	s,%esi
@@ -248,6 +281,7 @@ LClampReentry1:
 //
 	sarl	$16,%eax
 	movl	C(cachewidth),%edx
+	// FIXME: can we force cachewidth to always be a power of two and turn this into a shift?
 	imull	%edx,%eax				// (tfrac >> 16) * cachewidth
 	addl	%ebx,%esi
 	addl	%eax,%esi				// psource = pbase + (sfrac >> 16) +
@@ -425,6 +459,17 @@ LSetUp1:
 	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
+
+	/*
+	fsts	ftmp				// 1/z | t/z | s/z
+	push	%eax
+	movl	$0x86ef72e6,%eax
+	subl	ftmp,%eax 
+	movl	%eax, ftmp
+	pop		%eax
+	flds	ftmp				// z*64k | 1/z | t/z | s/z
+	*/
+	
 	jmp		LFDIVInFlight2
 
 	.align	4
@@ -438,6 +483,17 @@ LSetupNotLast2:
 	fdiv	%st(1),%st(0)	// z = 1/1/z
 							// this is what we've gone to all this trouble to
 							//  overlap
+
+	/*
+	fsts	ftmp				// 1/z | t/z | s/z
+	push 	%eax
+	movl	$0x86ef72e6,%eax
+	subl	ftmp,%eax 
+	movl	%eax, ftmp
+	pop		%eax
+	flds	ftmp				// z*64k | 1/z | t/z | s/z
+	*/
+
 LFDIVInFlight2:
 	movl	%ecx,counttemp
 
