@@ -100,18 +100,22 @@ C(D_DrawSpans8):
 // and span list pointers
 //
 // TODO: any overlap from rearranging?
-	flds	C(d_sdivzstepu)
-	fmuls	fp_8
 	movl	C(cacheblock),%edx
-	flds	C(d_tdivzstepu)
-	fmuls	fp_8
 	movl	pspans(%esp),%ebx	// point to the first span descriptor
-	flds	C(d_zistepu)
-	fmuls	fp_8
 	movl	%edx,pbase			// pbase = cacheblock
-	fstps	zi8stepu
-	fstps	tdivz8stepu
-	fstps	sdivz8stepu
+
+	// sdivz8stepu = d_sdivzstepu * 8.0
+	movl    $0x1000000, %eax
+	addl    C(d_sdivzstepu), %eax
+	movl    %eax, sdivz8stepu
+	// tdivz8stepu = d_tdivzstepu * 8.0
+	movl    $0x1000000, %eax
+	addl    C(d_tdivzstepu), %eax
+	movl    %eax, tdivz8stepu
+	// zi8stepu = d_zistepu * 8.0
+	movl    $0x1000000, %eax
+	addl    C(d_zistepu), %eax
+	movl    %eax, zi8stepu
 
 LSpanLoop:
 //
@@ -766,14 +770,14 @@ C(LFSpanLoop):
 // set up the initial 1/z value
 // clamp if z is nearer than 2 (1/z > 0.5)
 
-	fildl	espan_t_v(%esi)				// dv																	:: 		9-12 cycles, 7.8 (2-8) concurrent
+	fildl	espan_t_v(%esi)				// dv																	:: 		9-12 cycles, 4 (2-4) concurrent
 		movl	espan_t_v(%esi),%ecx	//																		:: 		1 cycle (concurrent)
 		movl	C(d_pzbuffer),%edi		//																		:: 		1 cycle (concurrent)
 
 	fmuls	C(d_zistepv)				// dv * zistepv		 													::		11 cycles, 8 concurrent
 		imull	C(d_zrowbytes),%ecx		//																		:: 		IU 13-42 cycles (concurrent for 8)
 
-	fildl	espan_t_u(%esi)				// du | dv * zistepv													:: 		9-12 cycles, 7.8 (2-8) concurrent
+	fildl	espan_t_u(%esi)				// du | dv * zistepv													:: 		9-12 cycles, 4 (2-4) concurrent
 		addl	%ecx,%edi				//																		::		1 cycle (concurrent)
 		movl	espan_t_u(%esi),%edx	//																		::      1 cycle (concurrent)
 
