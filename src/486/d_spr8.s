@@ -1,26 +1,13 @@
-/*
-Copyright (C) 1996-1997 Id Software, Inc.
-
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
-
-See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
-*/
+// SPDX-License-Identifier: GPL-2.0-or-later
 //
 // d_spr8.s
 // x86 assembly-language horizontal 8-bpp transparent span-drawing code.
-//
+
+// formatting settings for keystone
+//$ fpindent 1
+//$ tabstop 8
+//$ cindent 8
+//$ tindent 16
 
 #include "../asm_i386.h"
 #include "../quakeasm.h"
@@ -28,14 +15,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #if id386
 
-//----------------------------------------------------------------------
+// ----------------------------------------------------------------------
 // 8-bpp horizontal span drawing code for polygons, with transparency.
-//----------------------------------------------------------------------
+// ----------------------------------------------------------------------
 
 	.text
-
+								
 // out-of-line, rarely-needed clamping code
-
 LClampHigh0:
 	movl	C(bbextents),%esi
 	jmp		LClampReentry0
@@ -95,27 +81,29 @@ C(D_SpriteDrawSpans):
 // set up scaled-by-8 steps, for 8-long segments; also set up cacheblock
 // and span list pointers, and 1/z step in 0.32 fixed-point
 //
-// FIXME: any overlap from rearranging?
-	flds	C(d_sdivzstepu)
-	fmuls	fp_8
-	movl	C(cacheblock),%edx
-	flds	C(d_tdivzstepu)
-	fmuls	fp_8
-	movl	pspans(%esp),%ebx	// point to the first span descriptor
-	flds	C(d_zistepu)
-	fmuls	fp_8
-	movl	%edx,pbase			// pbase = cacheblock
+
 	flds	C(d_zistepu)
 	fmuls	fp_64kx64k
-	fxch	%st(3)
-	fstps	sdivz8stepu
-	fstps	zi8stepu
-	fstps	tdivz8stepu
+		// sdivz8stepu = d_sdivzstepu * 8.0
+		movl    $0x1000000, %eax
+		addl    C(d_sdivzstepu), %eax
+		movl    %eax, sdivz8stepu
+		// tdivz8stepu = d_tdivzstepu * 8.0
+		movl    $0x1000000, %eax
+		addl    C(d_tdivzstepu), %eax
+		movl    %eax, tdivz8stepu
+		// zi8stepu = d_zistepu * 8.0
+		movl    $0x1000000, %eax
+		addl    C(d_zistepu), %eax
+		movl    %eax, zi8stepu
 	fistpl	izistep
-	movl	izistep,%eax
-	rorl	$16,%eax		// put upper 16 bits in low word
-	movl	sspan_t_count(%ebx),%ecx
-	movl	%eax,izistep
+		movl	C(cacheblock),%edx
+		movl	pspans(%esp),%ebx	// point to the first span descriptor
+		movl	%edx,pbase			// pbase = cacheblock
+		movl	izistep,%eax
+		rorl	$16,%eax		// put upper 16 bits in low word
+		movl	sspan_t_count(%ebx),%ecx
+		movl	%eax,izistep
 
 	cmpl	$0,%ecx
 	jle		LNextSpan
@@ -127,10 +115,11 @@ LSpanLoop:
 // initial s and t values
 //
 // FIXME: pipeline FILD?
+//$ subtotal begin
 	fildl	sspan_t_v(%ebx)     // dv                                                   :: 9-12
 	fsts	ftmp				// dv													:: 7
 	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv 				                        :: 11
-    fildl	sspan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12
+	fildl	sspan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12
 	fsts	ftmp2				// du | dv*d_sdivzstepv									:: 7
 	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv 			        :: 11
 	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv 			        :: 8-20
@@ -151,11 +140,12 @@ LSpanLoop:
 	fmuls	ftmp2				// du*d_zistepu | dv*d_zistepv | fp_64k | t/z | s/z     :: 11
 	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv | fp_64k | t/z | s/z     :: 8-20
 	fadds	C(d_ziorigin)		// 1/z | fp_64k | t/z | s/z                             :: 8-20
-                                //                                                      :: TOTAL 161-239
+//$ subtotal end                                                     					:: TOTAL 161-239
 
 	fld		%st(0)			// 1/z | 1/z | fp_64k | t/z | s/z
-	fmuls	fp_64kx64k		// z64k 
-	fxch	%st(1)
+	fmuls	fp_64kx64k		// z64k | 1/z | fp_64k | t/z | s/z
+	fxch	%st(1)			// 1/z | z64k | fp_64k | t/z | s/z
+
 
 //
 // calculate and clamp s & t
@@ -572,13 +562,13 @@ LLastSegment:
 
 	fld		%st(0)			// duplicate it
 	fmul	%st(4),%st(0)	// s = s/z * z
-		//during the fmul...
+		// during the fmul...
 		movl	C(bbextents),%ebp
 		movl	C(bbextentt),%edx
 
 	fistpl	snext
 	fmul	%st(2),%st(0)	// t = t/z * z
-		//during the fmul...
+		// during the fmul...
 		addl	snext,%eax
 		movl	C(bbextents),%ebp
 		movl	C(bbextentt),%edx
@@ -647,7 +637,7 @@ LIsZeroLast:
 
 	ret							// jump to the number-of-pixels handler
 
-//----------------------------------------
+// ----------------------------------------
 
 LNoSteps:
 	movl	pz,%ecx
@@ -663,7 +653,7 @@ LOnlyOneStep:
 	movl	%ebx,%edx
 	jmp		LSetEntryvec
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry2_8
 Spr8Entry2_8:
@@ -672,7 +662,7 @@ Spr8Entry2_8:
 	movb	(%esi),%al
 	jmp		LLEntry2_8
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry3_8
 Spr8Entry3_8:
@@ -680,7 +670,7 @@ Spr8Entry3_8:
 	subl	$10,%ecx
 	jmp		LLEntry3_8
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry4_8
 Spr8Entry4_8:
@@ -688,7 +678,7 @@ Spr8Entry4_8:
 	subl	$8,%ecx
 	jmp		LLEntry4_8
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry5_8
 Spr8Entry5_8:
@@ -696,7 +686,7 @@ Spr8Entry5_8:
 	subl	$6,%ecx
 	jmp		LLEntry5_8
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry6_8
 Spr8Entry6_8:
@@ -704,7 +694,7 @@ Spr8Entry6_8:
 	subl	$4,%ecx
 	jmp		LLEntry6_8
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry7_8
 Spr8Entry7_8:
@@ -712,7 +702,7 @@ Spr8Entry7_8:
 	subl	$2,%ecx
 	jmp		LLEntry7_8
 
-//----------------------------------------
+// ----------------------------------------
 
 .globl	Spr8Entry8_8
 Spr8Entry8_8:
