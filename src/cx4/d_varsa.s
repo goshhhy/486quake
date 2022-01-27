@@ -21,10 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 // d_varsa.s
 //
 
-#include "asm_i386.h"
-#include "quakeasm.h"
-#include "asm_draw.h"
-#include "d_ifacea.h"
+#include "../asm_i386.h"
+#include "../quakeasm.h"
+#include "../asm_draw.h"
+#include "../d_ifacea.h"
 
 #if	id386
 
@@ -89,7 +89,7 @@ izi:			.long	0
 .globl	pbase, s, t, sfracf, tfracf, snext, tnext
 .globl	spancountminus1, zi16stepu, sdivz16stepu, tdivz16stepu
 .globl	zi8stepu, sdivz8stepu, tdivz8stepu, pz
-.globl	ftmp, ftmp2, ftmp3, ftmp4
+.globl	ftmp ftmp2 ftmp3
 s:				.long	0
 t:				.long	0
 snext:			.long	0
@@ -105,10 +105,8 @@ sdivz16stepu:	.long	0
 tdivz16stepu:	.long	0
 spancountminus1: .long	0
 pz:				.long	0
-ftmp:			.long	0
-ftmp2:			.long	0
-ftmp3:			.long	0
-ftmp4:			.long	0
+ftmp:			.long 	0
+
 .globl	izistep
 izistep:				.long	0
 
