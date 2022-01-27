@@ -63,43 +63,45 @@ LOutOfRange:
 	.align 2
 .globl C(TransformVector)
 C(TransformVector):
-	movl	in(%esp),%eax
-	movl	out(%esp),%edx
+							//															START i486 TIMING
+	movl	in(%esp),%ecx	//															::			1
+	movl	out(%esp),%edx	//															::			1
 
-	flds	(%eax)		// in[0]
-	fmuls	C(vright)		// in[0]*vright[0]
-	flds	(%eax)		// in[0] | in[0]*vright[0]
-	fmuls	C(vup)		// in[0]*vup[0] | in[0]*vright[0]
-	flds	(%eax)		// in[0] | in[0]*vup[0] | in[0]*vright[0]
-	fmuls	C(vpn)		// in[0]*vpn[0] | in[0]*vup[0] | in[0]*vright[0]
+	flds	(%ecx)			// in[0]													::	3
+	fmuls	C(vright)		// in[0]*vright[0]											::	11(8)
+	flds	(%ecx)			// in[0] | in[0]*vright[0]									::	3
+	fmuls	C(vup)			// in[0]*vup[0] | in[0]*vright[0]							::	11(8)
+	flds	(%ecx)			// in[0] | in[0]*vup[0] | in[0]*vright[0]					::	3
+	fmuls	C(vpn)			// in[0]*vpn[0] | in[0]*vup[0] | in[0]*vright[0]			::	11(8)
 
-	flds	4(%eax)		// in[1] | ...
-	fmuls	C(vpn)+4	// in[1]*vpn[1] | ...
-	flds	4(%eax)		// in[1] | in[1]*vpn[1] | ...
-	fmuls	C(vup)+4		// in[1]*vup[1] | in[1]*vpn[1] | ...
-	flds	4(%eax)		// in[1] | in[1]*vup[1] | in[1]*vpn[1] | ...
-	fmuls	C(vright)+4		// in[1]*vright[1] | in[1]*vup[1] | in[1]*vpn[1] | ...
+	flds	4(%ecx)			// in[1] | ...												::	3
+	fmuls	C(vpn)+4		// in[1]*vpn[1] | ...										::	11(8)
+	flds	4(%ecx)			// in[1] | in[1]*vpn[1] | ...								::	3
+	fmuls	C(vup)+4		// in[1]*vup[1] | in[1]*vpn[1] | ...						::	11(8)
+	flds	4(%ecx)			// in[1] | in[1]*vup[1] | in[1]*vpn[1] | ...				::	3
+	fmuls	C(vright)+4		// in[1]*vright[1] | in[1]*vup[1] | in[1]*vpn[1] | ...		::	11(8)
 
-	faddp	%st(0),%st(5)	// in[1]*vup[1] | in[1]*vpn[1] | ...
-	faddp	%st(0),%st(3)	// in[1]*vpn[1] | ...
-	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum
+	faddp	%st(0),%st(5)	// in[1]*vup[1] | in[1]*vpn[1] | ...						::	8-20(7)
+	faddp	%st(0),%st(3)	// in[1]*vpn[1] | ...										::	8-20(7)
+	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum						::	8-20(7)
 
-	flds	8(%eax)		// in[2] | ...
-	fmuls	C(vpn)+8	// in[2]*vpn[2] | ...
-	flds	8(%eax)		// in[2] | in[2]*vpn[2] | ...
-	fmuls	C(vup)+8		// in[2]*vup[2] | in[2]*vpn[2] | ...
-	flds	8(%eax)		// in[2] | in[2]*vup[2] | in[2]*vpn[2] | ...
-	fmuls	C(vright)+8		// in[2]*vright[2] | in[2]*vup[2] | in[2]*vpn[2] | ...
+	flds	8(%ecx)			// in[2] | ...												::	3
+	fmuls	C(vpn)+8		// in[2]*vpn[2] | ...										::	11(8)
+	flds	8(%ecx)			// in[2] | in[2]*vpn[2] | ...								::	3
+	fmuls	C(vup)+8		// in[2]*vup[2] | in[2]*vpn[2] | ...						::	11(8)
+	flds	8(%ecx)			// in[2] | in[2]*vup[2] | in[2]*vpn[2] | ...				::	3
+	fmuls	C(vright)+8		// in[2]*vright[2] | in[2]*vup[2] | in[2]*vpn[2] | ...		::	11(8)
 	
-	faddp	%st(0),%st(5)	// in[2]*vup[2] | in[2]*vpn[2] | ...
-	faddp	%st(0),%st(3)	// in[2]*vpn[2] | ...
-	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum
+	faddp	%st(0),%st(5)	// in[2]*vup[2] | in[2]*vpn[2] | ...						::	8-20(7)
+	faddp	%st(0),%st(3)	// in[2]*vpn[2] | ...										::	8-20(7)
+	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum						::	8-20(7)
 
-	fstps	8(%edx)		// out[2]
-	fstps	4(%edx)		// out[1]
-	fstps	(%edx)		// out[0]
-
-	ret
+	fstps	8(%edx)			// out[2]													::	7
+	fstps	4(%edx)			// out[1]													::	7
+	fstps	(%edx)			// out[0]													::	7
+	
+	ret																				//	:: 5
+	//																					:: TOTAL 202-274 (114 concurrent, 0 used)
 
 
 #define EMINS	4+4
