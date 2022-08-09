@@ -970,6 +970,126 @@ int Qm_Test_TransformVector( void  ) {
 	return score;
 }
 
+typedef struct {
+	unsigned int mantissa: 23;
+	int exponent: 8;
+	int sign: 1;
+} binary32;
+
+typedef union {
+	binary32 b;
+	float f;
+} fp;
+
+void testfp( float a, float b ) {
+	fp fa, fb;
+	fa.f = a;
+	fb.f = b;
+
+	printf( "%2.6f*%2.6f: real %f emu %f cy4 %f\n", a, b, Qm_FpIuRealFmul( a, b ) ,Qm_FpIuEmuFmul( a, b ), Qm_FpIuEmuFmulCyrix(a, b) );
+}
+ 
+static float gennum( void ) {
+	float num = rand() % 32768;
+	float den = rand() % 32768;
+
+	if ( rand() % 2 ) {
+		num *= -1;
+	} 
+
+	return num / den;
+}
+
+int Qm_Test_FmulEmulCyrix( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+
+	printf( "Fmul (cyrix): " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		float a = gennum();
+		float b = gennum();
+		for ( i = 0; i < 1000000; i++ ) {
+			float c = Qm_FpIuEmuFmulCyrix(a, b);
+			float d = Qm_FpIuEmuFmulCyrix(a, c);
+			float e = Qm_FpIuEmuFmulCyrix(b, c);
+			float f = Qm_FpIuEmuFmulCyrix(d, e);
+			a += 0.5;
+		}
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
+int Qm_Test_FmulEmul( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+
+	printf( "Fmul (emul):  " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		float a = gennum();
+		float b = gennum();
+		for ( i = 0; i < 1000000; i++ ) {
+			float c = Qm_FpIuEmuFmul(a, b);
+			float d = Qm_FpIuEmuFmul(a, c);
+			float e = Qm_FpIuEmuFmul(b, c);
+			float b = Qm_FpIuEmuFmul(d, e);
+			a += 0.5;
+		}
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
+int Qm_Test_FmulReal( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int score, i, iters;
+
+	printf( "Fmul (real):  " );
+	oldtime = newtime = Sys_FloatTime ();
+	targettime = oldtime + test_length;
+	iters = 0;
+
+	for ( i = 0; newtime < targettime; i++ ) {
+		float a = gennum();
+		float b = gennum();
+		for ( i = 0; i < 1000000; i++ ) {
+			float c = Qm_FpIuRealFmul(a, b);
+			float d = Qm_FpIuRealFmul(a, c);
+			float e = Qm_FpIuRealFmul(b, c);
+			float f = Qm_FpIuRealFmul(d, e);
+			a += 0.5;
+		}
+		newtime = Sys_FloatTime();
+		iters += i;
+	}
+	
+	totaltime = newtime - oldtime;
+	score = (int)( ((float)iters / totaltime) / 1000.f );
+	printf( "%i (%ik iters in %1.1f secs)\n", score, iters/1000, totaltime );
+
+	return score;
+}
+
 int Qm_Test_QmFpIuSequential( void  ) {
 	float oldtime, newtime, targettime, totaltime;
 	int score, i, iters;
@@ -1066,6 +1186,53 @@ int Qm_Test_QmFpMemSpeedTest( void  ) {
 	return score;
 }
 
+void (*Qm_FmulStConcurrencyTests[11])(void) = {
+	Qm_FmulStConcurrencyTest0,
+	Qm_FmulStConcurrencyTest1, 
+	Qm_FmulStConcurrencyTest2,
+	Qm_FmulStConcurrencyTest3,
+	Qm_FmulStConcurrencyTest4,
+	Qm_FmulStConcurrencyTest5,
+	Qm_FmulStConcurrencyTest6,
+	Qm_FmulStConcurrencyTest7,
+	Qm_FmulStConcurrencyTest8,
+	Qm_FmulStConcurrencyTest9,
+	Qm_FmulStConcurrencyTest10,
+};
+
+int Qm_FmulStConcurrencyTest( void  ) {
+	float oldtime, newtime, targettime, totaltime;
+	int scores[11], i, j, k, iters;
+
+	printf( "Qm_FmulStConcurrencyTest: " );
+
+	for ( i = 0; i < 11; i++ ) {
+		oldtime = newtime = Sys_FloatTime ();
+		targettime = oldtime + test_length;
+		iters = 0;
+
+		for ( j = 0; newtime < targettime; j++ ) {
+			for ( k = 0; k < 1000000; k++ )
+				Qm_FmulStConcurrencyTests[i]();
+			newtime = Sys_FloatTime();
+			iters += k;
+		}
+		
+		totaltime = newtime - oldtime;
+		scores[i] = (int)( ((float)iters / totaltime) / 10000.f );
+		printf( "%i ", scores[i] );
+	}
+
+	printf( "\n");
+	for ( i = 1; i < 11; i++ ) {
+		if ( scores[i] < scores[i-1] ) {
+			break;
+		}
+	}
+	printf( "                          %i nops\n", i-1 );
+
+	return scores[0];
+}
 
 
 int Qm_Test_DrawParticle( void ) {
@@ -1175,6 +1342,19 @@ int main (int c, char **v)
 
 	Sys_LowFPPrecision ();
 
+	testfp( 1, 1 );
+	testfp( 1, 2 );
+	testfp( 1.5, 1.5 );
+	testfp( 4.2, 3.7 );
+
+	testfp( 0.0, -0.0 );
+
+	for ( int i = 0; i < 10; i++ )
+		testfp( gennum(), gennum() );
+
+	//return 0;
+	
+
 	int emu = Qm_FpIntTerje( 10 );
 	if ( emu != 0 ) {
 		emuprint();
@@ -1201,9 +1381,11 @@ int main (int c, char **v)
 
 	FpRegSpeedTestScore = Qm_Test_QmFpRegSpeedTest();
 	FpMemSpeedTestScore = Qm_Test_QmFpMemSpeedTest();
-	if ( FpIuSequentialScore == FpIuInterleavedScore ) {
+	if ( FpRegSpeedTestScore == FpMemSpeedTestScore ) {
 		emuprint();
 	}
+
+	Qm_FmulStConcurrencyTest();
 
 	// //////////// //
 	// math.s tests //
@@ -1215,6 +1397,9 @@ int main (int c, char **v)
 	TransformVectorScore = Qm_Test_TransformVector();
 	DrawParticleScore = Qm_Test_DrawParticle();
 
+	Qm_Test_FmulReal();
+	Qm_Test_FmulEmul();
+	Qm_Test_FmulEmulCyrix();
 }
 
 
