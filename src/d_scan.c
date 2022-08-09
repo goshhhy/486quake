@@ -785,6 +785,62 @@ void D_DrawSpansCHorz (espan_t *pspan)
 D_DrawZSpans
 =============
 */
+
+#ifdef USE_MMX
+#include <mmintrin.h>
+
+void D_DrawZSpans( espan_t *pspan ) {
+    int count, doublecount, izistep, izistepv, iziorigin;
+    int izi, idu, idv;
+    short *pdest;
+    __m64 ltemp, mzero, mstep, mizi;
+
+    // convert zistepu, zistepv, and ziorigin to 16.16 fixed point
+    // FIXME: check for clamping/range problems
+    // we count on FP exceptions being turned off to avoid range problems
+    izistep = (int)( d_zistepu * 0x8000 * 0x10000 );
+    izistepv = (int)( d_zistepv * 0x8000 * 0x10000 );
+    iziorigin = (int)( d_ziorigin * 0x8000 * 0x10000 );
+
+    mstep = _mm_set_pi32( izistep, izistep );
+    mzero = _mm_set_pi32( 0, 0 );
+
+    do {
+        pdest = d_pzbuffer + ( d_zwidth * pspan->v ) + pspan->u;
+        count = pspan->count;
+
+        // calculate the initial 1/z value
+        izi = iziorigin + pspan->v * izistepv + pspan->u * izistep;
+
+        // if the destination is not 32-bit aligned, do one pixel (16-bit) to align to 32 bit
+        if ( (long)pdest & 0x02 ) {
+            *pdest++ = (short)( izi >> 16 );
+            izi += izistep;
+            count--;
+        }
+
+        // do the thing
+        if ( ( doublecount = count >> 1 ) > 0 ) {
+            mizi = _mm_set_pi32( izi + izistep, izi );
+            do {
+                mizi = _mm_add_pi32(mizi, mstep);
+                ltemp = _mm_unpacklo_pi16( mzero, mizi );
+                ltemp = _mm_unpackhi_pi16( ltemp, mizi );
+                ltemp = _mm_srli_si64 (ltemp, 32);
+                *(int *)pdest = _m_to_int( ltemp );
+                pdest += 2;
+            } while ( --doublecount > 0 );
+        }
+
+        // if there's a stray pixel left, deal with it
+        if ( count & 1 )
+            *pdest = (short)( izi >> 16 );
+
+    } while ( ( pspan = pspan->pnext ) != NULL );
+
+    _mm_empty();
+}
+#else
 void D_DrawZSpans (espan_t *pspan)
 {
 	int				count, doublecount, izistep;
@@ -837,6 +893,7 @@ void D_DrawZSpans (espan_t *pspan)
 
 	} while ((pspan = pspan->pnext) != NULL);
 }
+#endif //USE_MMX
 
 #endif
 
