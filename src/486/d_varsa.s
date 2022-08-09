@@ -89,7 +89,7 @@ izi:			.long	0
 .globl	pbase, s, t, sfracf, tfracf, snext, tnext
 .globl	spancountminus1, zi16stepu, sdivz16stepu, tdivz16stepu
 .globl	zi8stepu, sdivz8stepu, tdivz8stepu, pz
-.globl	ftmp
+.globl	ftmp ftmp2 ftmp3
 s:				.long	0
 t:				.long	0
 snext:			.long	0

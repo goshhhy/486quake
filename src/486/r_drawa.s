@@ -205,7 +205,7 @@ LCalcSecond:
 	fstp	%st(0)
 	fld		%st(0)
 LP0:
-
+									// lzi0 | lzi1 | u1 | v0 | v1 | u0
 	fxch	%st(1)					// lzi1 | lzi0 | u1 | v0 | v1 | u0
 	fstps	C(r_lzi1)				// lzi0 | u1 | v0 | v1 | u0
 	fxch	%st(1)					// u1 | lzi0 | v0 | v1 | u0

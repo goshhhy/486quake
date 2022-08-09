@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // d_draw16.s
 // x86 assembly-language horizontal 8-bpp span-drawing code, with 16-pixel
-// subdivision.
+// subdivision, for horizontal constant-z surfaces (floors, ceilings, etc)
 //
 
 #include "../asm_i386.h"
@@ -91,8 +91,8 @@ LClampHigh5:
 #define pspans	4+16
 
 	.align 4
-.globl C(D_DrawSpans16)
-C(D_DrawSpans16):
+.globl C(D_DrawSpansCHorz)
+C(D_DrawSpansCHorz):
 
 //
 // set up scaled-by-16 steps, for 16-long segments; also set up cacheblock
