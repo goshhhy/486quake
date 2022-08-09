@@ -59,7 +59,7 @@ void	VID_Init (unsigned char *palette)
 	vid.rowbytes = vid.conrowbytes = BASEWIDTH;
 	
 	d_pzbuffer = zbuffer;
-	//D_InitCaches (surfcache, sizeof(surfcache));
+	D_InitCaches (surfcache, sizeof(surfcache));
 }
 
 void	VID_Shutdown (void)
