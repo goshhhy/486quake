@@ -258,9 +258,11 @@ void D_DrawSpans8 (espan_t *pspan)
 {
 	int				count, spancount;
 	unsigned char	*pbase, *pdest;
+	unsigned short	*zsrc;
 	fixed16_t		s, t, snext, tnext, sstep, tstep;
 	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
 	float			sdivz8stepu, tdivz8stepu, zi8stepu;
+	int				izi;
 
 	sstep = 0;	// keep compiler happy
 	tstep = 0;	// ditto
@@ -273,9 +275,9 @@ void D_DrawSpans8 (espan_t *pspan)
 
 	do
 	{
-		pdest = (unsigned char *)((byte *)d_viewbuffer +
-				(screenwidth * pspan->v) + pspan->u);
-
+		pdest = (unsigned char *)((byte *)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+		zsrc = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
+		
 		count = pspan->count;
 
 	// calculate the initial s/z, t/z, 1/z, s, and t and clamp
@@ -284,7 +286,10 @@ void D_DrawSpans8 (espan_t *pspan)
 
 		sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu;
 		tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu;
-		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+		izi = *zsrc << 16;
+		zi = (((double)izi) / 0x10000) / 0x8000;
+		//zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+		
 		z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
 
 		s = (int)(sdivz * z) + sadjust;
@@ -384,6 +389,394 @@ void D_DrawSpans8 (espan_t *pspan)
 
 #endif
 
+/*
+=============
+D_DrawSpans8
+=============
+*/
+void D_DrawSpansZIndexed (espan_t *pspan)
+{
+	int				count, spancount;
+	unsigned char	*pbase, *pdest;
+	unsigned short	*zsrc;
+	fixed16_t		s, t, snext, tnext, sstep, tstep;
+	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
+	float			sdivz8stepu, tdivz8stepu, zi8stepu;
+	int				izi;
+
+	sstep = 0;	// keep compiler happy
+	tstep = 0;	// ditto
+
+	pbase = (unsigned char *)cacheblock;
+
+	sdivz8stepu = d_sdivzstepu * 8;
+	tdivz8stepu = d_tdivzstepu * 8;
+	zi8stepu = d_zistepu * 8;
+
+	do
+	{
+		pdest = (unsigned char *)((byte *)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+		zsrc = d_pzbuffer + (d_zwidth * pspan->v) + pspan->u;
+		
+		count = pspan->count;
+
+	// calculate the initial s/z, t/z, 1/z, s, and t and clamp
+		du = (float)pspan->u;
+		dv = (float)pspan->v;
+
+		sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu;
+		tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu;
+		izi = *zsrc << 16;
+		zi = (((double)izi) / 0x10000) / 0x8000;		
+		z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
+
+		s = (int)(sdivz * z) + sadjust;
+		if (s > bbextents)
+			s = bbextents;
+		else if (s < 0)
+			s = 0;
+
+		t = (int)(tdivz * z) + tadjust;
+		if (t > bbextentt)
+			t = bbextentt;
+		else if (t < 0)
+			t = 0;
+
+		do
+		{
+		// calculate s and t at the far end of the span
+			if (count >= 8)
+				spancount = 8;
+			else
+				spancount = count;
+
+			count -= spancount;
+
+			if (count)
+			{
+			// calculate s/z, t/z, zi->fixed s and t at far end of span,
+			// calculate s and t steps across span by shifting
+				sdivz += sdivz8stepu;
+				tdivz += tdivz8stepu;
+				zi += zi8stepu;
+				z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
+
+				snext = (int)(sdivz * z) + sadjust;
+				if (snext > bbextents)
+					snext = bbextents;
+				else if (snext < 8)
+					snext = 8;	// prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				tnext = (int)(tdivz * z) + tadjust;
+				if (tnext > bbextentt)
+					tnext = bbextentt;
+				else if (tnext < 8)
+					tnext = 8;	// guard against round-off error on <0 steps
+
+				sstep = (snext - s) >> 3;
+				tstep = (tnext - t) >> 3;
+			}
+			else
+			{
+			// calculate s/z, t/z, zi->fixed s and t at last pixel in span (so
+			// can't step off polygon), clamp, calculate s and t steps across
+			// span by division, biasing steps low so we don't run off the
+			// texture
+				spancountminus1 = (float)(spancount - 1);
+				sdivz += d_sdivzstepu * spancountminus1;
+				tdivz += d_tdivzstepu * spancountminus1;
+				zi += d_zistepu * spancountminus1;
+				z = (float)0x10000 / zi;	// prescale to 16.16 fixed-point
+				snext = (int)(sdivz * z) + sadjust;
+				if (snext > bbextents)
+					snext = bbextents;
+				else if (snext < 8)
+					snext = 8;	// prevent round-off error on <0 steps from
+								//  from causing overstepping & running off the
+								//  edge of the texture
+
+				tnext = (int)(tdivz * z) + tadjust;
+				if (tnext > bbextentt)
+					tnext = bbextentt;
+				else if (tnext < 8)
+					tnext = 8;	// guard against round-off error on <0 steps
+
+				if (spancount > 1)
+				{
+					sstep = (snext - s) / (spancount - 1);
+					tstep = (tnext - t) / (spancount - 1);
+				}
+			}
+
+			do
+			{
+				*pdest++ = ((int)z) % 256;
+				s += sstep;
+				t += tstep;
+			} while (--spancount > 0);
+
+			s = snext;
+			t = tnext;
+
+		} while (count > 0);
+
+	} while ((pspan = pspan->pnext) != NULL);
+}
+
+
+#if	!id386
+
+/*
+=============
+D_DrawSpans16
+
+FIXME: actually make this subdivide by 16 instead of 8!!!  qb:  OK!!!!
+=============
+*/
+
+/*==============================================
+//unrolled- mh, MK, qbism
+//============================================*/
+
+
+//qb: this one does a simple motion blur, but leaves artificacts (smears on walls) due to alphamap imperfections.
+//#define WRITEPDEST_MB(i)  { pdest[i] = vid.alphamap[*(pbase + (s >> 16) + (t >> 16) * cachewidth)*256+pdest[i]]; s+=sstep; t+=tstep;}
+
+//qbism: pointer to pbase and macroize idea from mankrip
+#define WRITEPDEST(i)   { pdest[i] = *(pbase + (s >> 16) + (t >> 16) * cachewidth); s+=sstep; t+=tstep;}
+
+void D_DrawSpans16(espan_t *pspan) //qb: up it from 8 to 16.  This + unroll = big speed gain!
+{
+	int				count, spancount;
+	unsigned char	*pbase, *pdest;
+	unsigned short	*zsrc;
+	fixed16_t		s, t, snext, tnext, sstep, tstep;
+	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
+	float			sdivzstepu, tdivzstepu, zistepu;
+	int				izi;
+
+	sstep = 0;   // keep compiler happy
+	tstep = 0;   // ditto
+
+	pbase = (byte *)cacheblock;
+	sdivzstepu = d_sdivzstepu * 16;
+	tdivzstepu = d_tdivzstepu * 16;
+	zistepu = d_zistepu * 16;
+
+	do
+	{
+		pdest = (byte *)((byte *)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+		count = pspan->count >> 4;
+
+		spancount = pspan->count % 16;
+
+		// calculate the initial s/z, t/z, 1/z, s, and t and clamp
+		du = (float)pspan->u;
+		dv = (float)pspan->v;
+
+		sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu;
+		tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu;
+		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+		z = (float)0x10000 / zi;   // prescale to 16.16 fixed-point
+
+		s = (int)(sdivz * z) + sadjust;
+		if (s < 0) s = 0;
+		else if (s > bbextents) s = bbextents;
+
+		t = (int)(tdivz * z) + tadjust;
+		if (t < 0) t = 0;
+		else if (t > bbextentt) t = bbextentt;
+
+
+
+		while (count-- > 0) // Manoel Kasimier
+		{
+			sdivz += sdivzstepu;
+			tdivz += tdivzstepu;
+			zi += zistepu;
+			z = (float)0x10000 / zi;   // prescale to 16.16 fixed-point
+
+			snext = (int)(sdivz * z) + sadjust;
+			if (snext < 16) snext = 16;
+			else if (snext > bbextents) snext = bbextents;
+
+			tnext = (int)(tdivz * z) + tadjust;
+			if (tnext < 16) tnext = 16;
+			else if (tnext > bbextentt) tnext = bbextentt;
+
+			sstep = (snext - s) >> 4;
+			tstep = (tnext - t) >> 4;
+			pdest += 16;
+			WRITEPDEST(-16);
+			WRITEPDEST(-15);
+			WRITEPDEST(-14);
+			WRITEPDEST(-13);
+			WRITEPDEST(-12);
+			WRITEPDEST(-11);
+			WRITEPDEST(-10);
+			WRITEPDEST(-9);
+			WRITEPDEST(-8);
+			WRITEPDEST(-7);
+			WRITEPDEST(-6);
+			WRITEPDEST(-5);
+			WRITEPDEST(-4);
+			WRITEPDEST(-3);
+			WRITEPDEST(-2);
+			WRITEPDEST(-1);
+			s = snext;
+			t = tnext;
+		}
+		if (spancount > 0)
+		{
+			spancountminus1 = (float)(spancount - 1);
+			sdivz += d_sdivzstepu * spancountminus1;
+			tdivz += d_tdivzstepu * spancountminus1;
+			zi += d_zistepu * spancountminus1;
+			z = (float)0x10000 / zi;   // prescale to 16.16 fixed-point
+
+			snext = (int)(sdivz * z) + sadjust;
+			if (snext < 16) snext = 16;
+			else if (snext > bbextents) snext = bbextents;
+
+			tnext = (int)(tdivz * z) + tadjust;
+			if (tnext < 16) tnext = 16;
+			else if (tnext > bbextentt) tnext = bbextentt;
+
+			if (spancount > 1)
+			{
+				sstep = (snext - s) / (spancount - 1);
+				tstep = (tnext - t) / (spancount - 1);
+			}
+
+			pdest += spancount;
+
+			switch (spancount)
+			{
+			case 16:
+				WRITEPDEST(-16);
+			case 15:
+				WRITEPDEST(-15);
+			case 14:
+				WRITEPDEST(-14);
+			case 13:
+				WRITEPDEST(-13);
+			case 12:
+				WRITEPDEST(-12);
+			case 11:
+				WRITEPDEST(-11);
+			case 10:
+				WRITEPDEST(-10);
+			case  9:
+				WRITEPDEST(-9);
+			case  8:
+				WRITEPDEST(-8);
+			case  7:
+				WRITEPDEST(-7);
+			case  6:
+				WRITEPDEST(-6);
+			case  5:
+				WRITEPDEST(-5);
+			case  4:
+				WRITEPDEST(-4);
+			case  3:
+				WRITEPDEST(-3);
+			case  2:
+				WRITEPDEST(-2);
+			case  1:
+				WRITEPDEST(-1);
+				break;
+			}
+		}
+	} while ((pspan = pspan->pnext) != NULL);
+}
+
+#endif
+
+//#if	!id386
+
+/*
+=============
+D_DrawSpansCHorz
+
+draw spans for surfaces with horizontal constant-z
+=============
+*/
+void D_DrawSpansCHorz (espan_t *pspan)
+{
+	int				spancount, i;
+	unsigned char	*pbase, *pdest;
+	fixed16_t		s, t, snext, tnext, sstep, tstep;
+	float			sdivz, tdivz, zi, z, du, dv, spancountminus1;
+	float			sdivzstepu, tdivzstepu;
+	int				izi;
+
+	sstep = 0;   // keep compiler happy
+	tstep = 0;   // ditto
+
+	pbase = (byte *)cacheblock;
+	sdivzstepu = d_sdivzstepu * 16;
+	tdivzstepu = d_tdivzstepu * 16;
+
+	do
+	{
+		pdest = (byte *)((byte *)d_viewbuffer + (screenwidth * pspan->v) + pspan->u);
+
+		spancount = pspan->count;
+
+		// calculate the initial s/z, t/z, 1/z, s, and t and clamp
+		du = (float)pspan->u;
+		dv = (float)pspan->v;
+
+		sdivz = d_sdivzorigin + dv*d_sdivzstepv + du*d_sdivzstepu;
+		tdivz = d_tdivzorigin + dv*d_tdivzstepv + du*d_tdivzstepu;
+		zi = d_ziorigin + dv*d_zistepv + du*d_zistepu;
+		z = (float)0x10000 / zi;   // prescale to 16.16 fixed-point
+
+		s = (int)(sdivz * z) + sadjust;
+		if (s < 0) s = 0;
+		else if (s > bbextents) s = bbextents;
+
+		t = (int)(tdivz * z) + tadjust;
+		if (t < 0) t = 0;
+		else if (t > bbextentt) t = bbextentt;
+
+		// {
+			spancountminus1 = (float)(spancount - 1);
+			sdivz += d_sdivzstepu * spancountminus1;
+			tdivz += d_tdivzstepu * spancountminus1;
+
+			snext = (int)(sdivz * z) + sadjust;
+			if (snext > bbextents) snext = bbextents;
+
+			tnext = (int)(tdivz * z) + tadjust;
+			if (tnext > bbextentt) tnext = bbextentt;
+
+			if (spancount > 1)
+			{
+				sstep = (snext - s) / (spancount - 1);
+				tstep = (tnext - t) / (spancount - 1);
+			}
+
+			i = 0;
+			switch( spancount % 8 ) {
+				case 0: do {	WRITEPDEST(i++);
+				case 7: 		WRITEPDEST(i++);
+				case 6: 		WRITEPDEST(i++);
+				case 5: 		WRITEPDEST(i++);
+				case 4: 		WRITEPDEST(i++);
+				case 3: 		WRITEPDEST(i++);
+				case 2: 		WRITEPDEST(i++);
+				case 1: 		WRITEPDEST(i++);
+				 		} while ( i < spancount );
+				break;
+			}
+		// }
+	} while ((pspan = pspan->pnext) != NULL);
+}
+
+//#endif
 
 #if	!id386
 

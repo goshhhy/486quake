@@ -131,6 +131,7 @@ void D_CalcGradients (msurface_t *pface)
 	pplane = pface->plane;
 
 	mipscale = 1.0 / (float)(1 << miplevel);
+	//mipscale = FastReciprocal( 1 << miplevel );
 
 	TransformVector (pface->texinfo->vecs[0], p_saxis);
 	TransformVector (pface->texinfo->vecs[1], p_taxis);
@@ -304,9 +305,19 @@ void D_DrawSurfaces (void)
 
 				D_CalcGradients (pface);
 
-				(*d_drawspans) (s->spans);
-
 				D_DrawZSpans (s->spans);
+
+				if ( (*(unsigned int*)(&d_zistepu) & 0x7fffffff) == 0 ) { //ugly... but fast
+					//D_DrawSolidSurface (s, 251);
+					D_DrawSpansCHorz(s->spans);
+				} else {
+					//if ( ( s->flags & SURF_CZVERT ) && cl.viewangles[PITCH] == 0.0f ) {
+					//	D_DrawSolidSurface (s, 243);
+						//D_DrawSpansZIndexed(s->spans);
+					//} else {
+						(*d_drawspans) (s->spans);
+					//}
+				}
 
 				if (s->insubmodel)
 				{
