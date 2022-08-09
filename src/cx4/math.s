@@ -57,51 +57,165 @@ LOutOfRange:
 	movl	$0xFFFFFFFF,%eax
 	ret
 
-#define	in	4
-#define out	8
+#define	in	8
+#define out	12
+
+.globl C(fm_a)
+.globl C(fm_b)
+.globl C(fm_outf)
+.globl C(fm_outi)
 
 	.align 2
 .globl C(TransformVector)
 C(TransformVector):
 							//															START CYRIX TIMING
-	movl	in(%esp),%ecx	//															::			1-2
-	movl	out(%esp),%edx	//															::			1-2
+	pushl	%edi			//															::				2
+	movl	8(%esp),%edi	//															::				2
+	// fpu: do first round of dot product multiplies
+	flds	C(vright)		// vright[0]												::	5
+	flds	C(vup)			// vup[0] | vright[0]										::	5
+	flds	C(vpn)			// vpn[0] | vup[0] | vright[0]								::	5
+	flds	(%edi)			// in[0] | vpn[0] | vup[0] | vright[0]						::	5
+	fmul	%st(0),%st(1)	// in[0] | in[0]*vpn[0] | vup[0] | vright[0]				::	12(10)
+		// integer: setup
+		pushl	%ebx																//	::				2
+		movl	16(%esp),%ebx														//	::				2
+		pushl	%esi																//	::				2
+		pushl	%eax																//	::				2
+		movl	8(%edi), %ecx														//	:: 				2
 
-	flds	(%ecx)			// in[0]													::	5(2?)
-	fmuls	C(vright)		// in[0]*vright[0]											::	13(10?)
-	flds	(%ecx)			// in[0] | in[0]*vright[0]									::	5(2?)
-	fmuls	C(vup)			// in[0]*vup[0] | in[0]*vright[0]							::	13(10?)
-	flds	(%ecx)			// in[0] | in[0]*vup[0] | in[0]*vright[0]					::	5(2?)
-	fmuls	C(vpn)			// in[0]*vpn[0] | in[0]*vup[0] | in[0]*vright[0]			::	13(10?)
+	fmul	%st(0),%st(2)	// in[0] | in[0]*vpn[0] | in[0]*vup[0] | vright[0]			::	12(10)
+		// integer: in[2] * vpn[2]
+		movl	C(vpn)+8, %esi													//	:: 				2
+		movl	%ecx, %edx															//	:: 				1
+		movl	%ecx, C(fm_a)
 
-	flds	4(%ecx)			// in[1] | ...												::	5(2?)
-	fmuls	C(vpn)+4		// in[1]*vpn[1] | ...										::	13(10?)
-	flds	4(%ecx)			// in[1] | in[1]*vpn[1] | ...								::	5(2?)
-	fmuls	C(vup)+4		// in[1]*vup[1] | in[1]*vpn[1] | ...						::	13(10?)
-	flds	4(%ecx)			// in[1] | in[1]*vup[1] | in[1]*vpn[1] | ...				::	5(2?)
-	fmuls	C(vright)+4		// in[1]*vright[1] | in[1]*vup[1] | in[1]*vpn[1] | ...		::	13(10?)
+		movl	%esi, %eax															//	:: 				1
+		movl	%esi, C(fm_b)
+
+		pushf
+
+        andl    $0x7fffffff, %edx                               //              :: 1
+        cmpl    $0, %edx                                        //              :: 1
+        jz      FmulZero
+
+        andl    $0x7fffffff, %eax                               //              :: 1
+        cmpl    $0, %eax                                        //              :: 1
+        jz      FmulZero
+
+		popf
+
+        shrl    $8, %eax                                      		    //              :: 				1
+        orw     $0x8000, %ax                                            //              :: 				1
+		shrl    $8, %edx                                        		//              :: 				1
+        orw     $0x8000, %dx                                    		//              :: 				1
+
+	fmulp	%st(0),%st(3)	// in[0]*vpn[0] | in[0]*vup[0] | in[0]*vright[0]			::	12(10)
+        mul     %dx                 // dx = unnormalized mantissa result   			    :: 				3
+        mov     %esi, %eax                                      		//              :: 				1
+        shrl    $23, %ecx           // ecx = (a) 1s.8e                          		:: 				1
+        shrl    $23, %eax           // eax = (b) 1s.8e                         			:: 				1
+	 	addb    %cl, %al           //            add 8 bit exponents            		:: 				1
+        movb    %dh, %cl                                        //              		:: 				1
+        shrb    $7, %cl                                         //              		:: 				1
+        addb    %cl, %al           //            normalization correction       		:: 				1
+        xor     $1, %cl                                         //              		:: 				1
+
+	// fpu: do second round of dot product multiplies
+	flds	C(vpn)+4		// vpn[1]													::	5
+	flds	C(vup)+4		// vup[1] | vpn[1]											::	5
+	flds	C(vright)+4		// vright[1] | vup[1] | vpn[1]								::	5
+	flds	4(%edi)			// in[1] | vright[1] | vup[1] | vpn[1]						::	5	fmuls	C(vpn)+4		// in[1]*vpn[1] | ...										::	13(8)
+	fmul	%st(0), %st(1)	// in[1] | in[1]*vright[1] | vup[1] | vpn[1]				::	12(10)
+        addb    $-127, %al         //            exponent bias correction       		:: 				1
+        addb    $8, %cl             //      cl = normalization shift amount     		:: 				1
+        xorb    %ch, %ah            //          sign calculation                		:: 				1
+		shll    $23, %eax           //      esi = 1s.8e.23blank                 		:: 				1
+        shll    %cl, %edx                                       //              		:: 				1
+        andl    $0x7fffff, %edx     //      edx = mantissa                      		:: 				1
+        orl     %edx, %eax                                      //              		:: 				1
+        movl    %eax, C(fm_outi)                                    //              		:: 				2
+	fmul	%st(0), %st(2)	// in[1] | in[1]*vright[1] | in[1]*vup[1] | vpn[1]			::	12(10)
+	fmulp	%st(0), %st(3)	// in[1]*vright[1] | in[1]*vup[1] | in[1]*vpn[1]				::	12(10)
 
 	faddp	%st(0),%st(5)	// in[1]*vup[1] | in[1]*vpn[1] | ...						::	10-16(8-14)
 	faddp	%st(0),%st(3)	// in[1]*vpn[1] | ...										::	10-16(8-14)
 	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum						::	10-16(8-14)
-
-	flds	8(%ecx)			// in[2] | ...												::	5(2?)
-	fmuls	C(vpn)+8		// in[2]*vpn[2] | ...										::	13(10?)
-	flds	8(%ecx)			// in[2] | in[2]*vpn[2] | ...								::	5(2?)
-	fmuls	C(vup)+8		// in[2]*vup[2] | in[2]*vpn[2] | ...						::	13(10?)
-	flds	8(%ecx)			// in[2] | in[2]*vup[2] | in[2]*vpn[2] | ...				::	5(2?)
-	fmuls	C(vright)+8		// in[2]*vright[2] | in[2]*vup[2] | in[2]*vpn[2] | ...		::	13(10?)
+ 
+	flds	C(vpn)+8		// vpn[2]													::	5
+	flds	C(vup)+8		// vup[2] | vpn[2]											::	5
+	flds	C(vright)+8		// vright[2] | vup[2] | vpn[2]								::	5
+	flds	8(%edi)			// in[2] | vright[2] | vup[2] | vpn[2]						::	5
+	fmul	%st(0), %st(1)			// in[2] | in[2]*vright[2] | vup[2] | vpn[2]				::	12(10)
+	fmul	%st(0), %st(2)			// in[2] | in[2]*vright[2] | in[2]*vup[2] | vpn[2]			::	12(10)
+	fmulp	%st(0), %st(3)			// in[2]*vright[2] | in[2]*vup[2] | in[2]*vpn[2]			::	12(10)
 	
-	faddp	%st(0),%st(5)	// in[2]*vup[2] | in[2]*vpn[2] | ...						::	10-16(8-14)
-	faddp	%st(0),%st(3)	// in[2]*vpn[2] | ...										::	10-16(8-14)
-	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum						::	10-16(8-14)
+	faddp	%st(0),%st(5)	// in[2]*vup[2] | in[2]*vpn[2] | ...						::	8-20(7)
+	faddp	%st(0),%st(3)	// in[2]*vpn[2] | ...										::	8-20(7)
+	fsts	C(fm_outf)
+	//flds	C(fm_outi)
+	faddp	%st(0),%st(1)
+	//fadds	ftmp	// vpn_accum | vup_accum | vright_accum						::	8-20(7)
 
-	fstps	8(%edx)			// out[2]													::	9
-	fstps	4(%edx)			// out[1]													::	9
-	fstps	(%edx)			// out[0]													::	9
-	
+		popl %eax
+		popl %esi
+
+	fstps	8(%ebx)			// out[2]													::	7
+	fstps	4(%ebx)			// out[1]													::	7
+	fstps	(%ebx)			// out[0]													::	7
+
+	popl	%ebx
+	popl	%edi
+
 	ret																				//	:: 10
 	//																					:: TOTAL 261-299 (156-192? concurrent, 0 used)
+
+FmulZero:
+	fmulp	%st(0),%st(3)	// in[0]*vpn[0] | in[0]*vup[0] | in[0]*vright[0]			::	12(10)
+		popf
+		
+	// fpu: do second round of dot product multiplies
+	flds	C(vpn)+4		// vpn[1]													::	5
+	flds	C(vup)+4		// vup[1] | vpn[1]											::	5
+	flds	C(vright)+4		// vright[1] | vup[1] | vpn[1]								::	5
+	flds	4(%edi)			// in[1] | vright[1] | vup[1] | vpn[1]						::	5	fmuls	C(vpn)+4		// in[1]*vpn[1] | ...										::	13(8)
+	fmul	%st(0), %st(1)	// in[1] | in[1]*vright[1] | vup[1] | vpn[1]				::	12(10)
+	fmul	%st(0), %st(2)	// in[1] | in[1]*vright[1] | in[1]*vup[1] | vpn[1]			::	12(10)
+	fmulp	%st(0), %st(3)	// in[1]*vright[1] | in[1]*vup[1] | in[1]*vpn[1]				::	12(10)
+		mov		$0, %eax
+		mov		%eax, C(fm_outi)
+
+	faddp	%st(0),%st(5)	// in[1]*vup[1] | in[1]*vpn[1] | ...						::	10-16(8-14)
+	faddp	%st(0),%st(3)	// in[1]*vpn[1] | ...										::	10-16(8-14)
+	faddp	%st(0),%st(1)	// vpn_accum | vup_accum | vright_accum						::	10-16(8-14)
+ 
+	flds	C(vpn)+8		// vpn[2]													::	5
+	flds	C(vup)+8		// vup[2] | vpn[2]											::	5
+	flds	C(vright)+8		// vright[2] | vup[2] | vpn[2]								::	5
+	flds	8(%edi)			// in[2] | vright[2] | vup[2] | vpn[2]						::	5
+	fmul	%st(0), %st(1)			// in[2] | in[2]*vright[2] | vup[2] | vpn[2]				::	12(10)
+	fmul	%st(0), %st(2)			// in[2] | in[2]*vright[2] | in[2]*vup[2] | vpn[2]			::	12(10)
+	fmulp	%st(0), %st(3)			// in[2]*vright[2] | in[2]*vup[2] | in[2]*vpn[2]			::	12(10)
+	
+	faddp	%st(0),%st(5)	// in[2]*vup[2] | in[2]*vpn[2] | ...						::	8-20(7)
+	faddp	%st(0),%st(3)	// in[2]*vpn[2] | ...										::	8-20(7)
+	fstp	%st(0)
+	fldz
+	fsts	C(fm_outf)
+	faddp	%st(0),%st(1)
+	//fadds	ftmp	// vpn_accum | vup_accum | vright_accum						::	8-20(7)
+
+		popl %eax
+		popl %esi
+
+	fstps	8(%ebx)			// out[2]													::	7
+	fstps	4(%ebx)			// out[1]													::	7
+	fstps	(%ebx)			// out[0]													::	7
+
+	popl	%ebx
+	popl	%edi
+
+	ret																				//	:: 10
 
 #define EMINS	4+4
 #define EMAXS	4+8
