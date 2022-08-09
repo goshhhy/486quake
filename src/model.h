@@ -83,6 +83,8 @@ typedef struct texture_s
 #define SURF_DRAWTURB		0x10
 #define SURF_DRAWTILED		0x20
 #define SURF_DRAWBACKGROUND	0x40
+// "internal" flag, for surfaces that may be candidates for vertical const-z rendering 
+#define SURF_CZVERT			0x8000
 
 // !!! if this is changed, it must be changed in asm_draw.h too !!!
 typedef struct

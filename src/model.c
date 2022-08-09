@@ -824,6 +824,11 @@ void Mod_LoadFaces (lump_t *l)
 			}
 			continue;
 		}
+
+		if ( out->plane->normal[2] == 0.0f ) {
+			//Con_Printf("possible czvert surface found\n");
+			out->flags |= SURF_CZVERT;
+		}
 	}
 }
 
