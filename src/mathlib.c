@@ -560,6 +560,17 @@ int GreatestCommonDivisor (int i1, int i2)
 	}
 }
 
+float FastReciprocal( float number )
+{
+	long i;
+	float y;
+
+	y  = number;
+	i  = * ( long * ) &y;
+	i  = 0x7eef2910 - i;               // what the fuck?!?!?
+	y  = * ( float * ) &i;
+	return y;
+}
 
 #if	!id386
 
