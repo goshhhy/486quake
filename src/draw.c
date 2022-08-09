@@ -558,10 +558,10 @@ void Draw_ConsoleBackground (int lines)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #elif defined(id386)
-	sprintf (ver, "%iquake r%i -%s%s %4.2f", SUBARCH, REVISION, OLEVEL, LTOFLAGS, VERSION);
+	sprintf (ver, "%squake r%i -%s%s %4.2f", SUBARCH, REVISION, OLEVEL, LTOFLAGS, VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #else
-	sprintf (ver, "%iquake r%i -%s%s noasm %4.2f", SUBARCH, REVISION, OLEVEL, LTOFLAGS, VERSION);
+	sprintf (ver, "%squake r%i -%s%s noasm %4.2f", SUBARCH, REVISION, OLEVEL, LTOFLAGS, VERSION);
 	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
 #endif
 

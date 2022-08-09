@@ -889,7 +889,7 @@ int main (int c, char **v)
 	extern void (*dos_error_func)(char *, ...);
 	static	char	cwd[1024];
 
-	printf ("%iQuake -%s%s v%4.2f built with %s\n", SUBARCH, OLEVEL, LTOFLAGS, VERSION, CCVERSION);
+	printf ("%sQuake -%s%s v%4.2f built with %s\n", SUBARCH, OLEVEL, LTOFLAGS, VERSION, CCVERSION);
 	
 // make sure there's an FPU
 	signal(SIGNOFP, Sys_NoFPUExceptionHandler);
