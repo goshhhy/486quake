@@ -320,7 +320,7 @@ void R_SetVrect (vrect_t *pvrectin, vrect_t *pvrect, int lineadj)
 		size = 100;
 		lineadj = 0;
 	}
-	size /= 100;
+	size /= 100.0;
 
 	h = pvrectin->height - lineadj;
 	pvrect->width = pvrectin->width * size;
