@@ -29,7 +29,9 @@ qboolean        r_cache_thrash;         // set if surface cache is thrashing
 int                                     sc_size;
 surfcache_t                     *sc_rover, *sc_base;
 
+#ifdef DEBUG
 #define GUARDSIZE       4
+#endif
 
 
 int     D_SurfaceCacheForRes (int width, int height)
@@ -52,6 +54,7 @@ int     D_SurfaceCacheForRes (int width, int height)
 	return size;
 }
 
+#ifdef DEBUG
 void D_CheckCacheGuard (void)
 {
 	byte    *s;
@@ -72,6 +75,7 @@ void D_ClearCacheGuard (void)
 	for (i=0 ; i<GUARDSIZE ; i++)
 		s[i] = (byte)i;
 }
+#endif
 
 
 /*
@@ -86,15 +90,21 @@ void D_InitCaches (void *buffer, int size)
 	if (!msg_suppress_1)
 		Con_Printf ("%ik surface cache\n", size/1024);
 
+#ifdef DEBUG
 	sc_size = size - GUARDSIZE;
+#else
+	sc_size = size;
+#endif
 	sc_base = (surfcache_t *)buffer;
 	sc_rover = sc_base;
 	
 	sc_base->next = NULL;
 	sc_base->owner = NULL;
 	sc_base->size = sc_size;
-	
+
+#ifdef DEBUG
 	D_ClearCacheGuard ();
+#endif
 }
 
 
@@ -204,7 +214,9 @@ surfcache_t     *D_SCAlloc (int width, int size)
 		d_roverwrapped = true;
 	}
 
-D_CheckCacheGuard ();   // DEBUG
+#ifdef DEBUG
+	D_CheckCacheGuard ();
+#endif
 	return new;
 }
 
