@@ -525,6 +525,8 @@ void D_DrawSpansZIndexed (espan_t *pspan)
 	} while ((pspan = pspan->pnext) != NULL);
 }
 
+//qbism: pointer to pbase and macroize idea from mankrip
+#define WRITEPDEST(i)   { pdest[i] = *(pbase + (s >> 16) + (t >> 16) * cachewidth); s+=sstep; t+=tstep;}
 
 #if	!id386
 
@@ -543,9 +545,6 @@ FIXME: actually make this subdivide by 16 instead of 8!!!  qb:  OK!!!!
 
 //qb: this one does a simple motion blur, but leaves artificacts (smears on walls) due to alphamap imperfections.
 //#define WRITEPDEST_MB(i)  { pdest[i] = vid.alphamap[*(pbase + (s >> 16) + (t >> 16) * cachewidth)*256+pdest[i]]; s+=sstep; t+=tstep;}
-
-//qbism: pointer to pbase and macroize idea from mankrip
-#define WRITEPDEST(i)   { pdest[i] = *(pbase + (s >> 16) + (t >> 16) * cachewidth); s+=sstep; t+=tstep;}
 
 void D_DrawSpans16(espan_t *pspan) //qb: up it from 8 to 16.  This + unroll = big speed gain!
 {
