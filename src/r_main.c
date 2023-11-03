@@ -939,10 +939,15 @@ void R_EdgeDrawing (void)
 		VID_UnlockBuffer ();
 		S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
+	} else {
+		ed_time1 = Sys_FloatTime();
 	}
 	
 	if (!(r_drawpolys | r_drawculledpolys))
 		R_ScanEdges ();
+
+	if (r_dspeeds.value)
+		ed_time2 = Sys_FloatTime();
 }
 
 
@@ -990,10 +995,8 @@ SetVisibilityByPassages ();
 		VID_UnlockBuffer ();
 		S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
-	} else {
-		ed_time1 = Sys_FloatTime();
 	}
-	
+
 	R_EdgeDrawing ();
 
 	if (!r_dspeeds.value)
@@ -1002,8 +1005,7 @@ SetVisibilityByPassages ();
 		S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
 	} else {
-		ed_time2 = Sys_FloatTime();
-		se_time2 = ed_time2;
+		se_time2 = Sys_FloatTime();;
 		de_time1 = se_time2;
 	}
 
