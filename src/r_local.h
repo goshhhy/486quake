@@ -285,6 +285,7 @@ void R_AliasClipTriangle (mtriangle_t *ptri);
 extern float	r_time1;
 extern float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 extern float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
+extern float	ds_time1, ds_time2, ed_time1, ed_time2;
 extern int		r_frustum_indexes[4*6];
 extern int		r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
 extern qboolean	r_surfsonstack;

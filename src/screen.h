@@ -48,6 +48,8 @@ extern	cvar_t		scr_viewsize;
 
 extern cvar_t scr_viewsize;
 
+extern  float		scr_time1, scr_time2;
+
 // only the refresh window will be updated unless these variables are flagged 
 extern	int			scr_copytop;
 extern	int			scr_copyeverything;

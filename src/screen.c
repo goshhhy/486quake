@@ -75,6 +75,7 @@ CENTER PRINTING
 char		scr_centerstring[1024];
 float		scr_centertime_start;	// for slow victory printing
 float		scr_centertime_off;
+float		scr_time1, scr_time2;
 int			scr_center_lines;
 int			scr_erase_lines;
 int			scr_erase_center;
@@ -894,6 +895,9 @@ void SCR_UpdateScreen (void)
 
 	VID_UnlockBuffer ();
 
+	if (r_dspeeds.value)
+		scr_time1 = Sys_FloatTime();
+
 	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
 
 	if (scr_drawdialog)
@@ -935,6 +939,9 @@ void SCR_UpdateScreen (void)
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
+	if (r_dspeeds.value)
+		scr_time2 = Sys_FloatTime();
+	
 	if (pconupdate)
 	{
 		D_UpdateRects (pconupdate);

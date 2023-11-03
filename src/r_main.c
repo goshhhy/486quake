@@ -112,6 +112,7 @@ int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
+float	ds_time1, ds_time2, ed_time1, ed_time2;
 
 void R_MarkLeaves (void);
 
@@ -961,6 +962,9 @@ void R_RenderView_ (void)
 	if (r_timegraph.value || r_speeds.value || r_dspeeds.value)
 		r_time1 = Sys_FloatTime ();
 
+	if (r_dspeeds.value)
+		ds_time1 = Sys_FloatTime ();
+
 	R_SetupFrame ();
 
 #ifdef PASSAGES
@@ -968,6 +972,9 @@ SetVisibilityByPassages ();
 #else
 	R_MarkLeaves ();	// done here so we know if we're in water
 #endif
+
+	if (r_dspeeds.value)
+		ds_time2 = Sys_FloatTime ();
 
 // make FDIV fast. This reduces timing precision after we've been running for a
 // while, so we don't do it globally.  This also sets chop mode, and we do it
@@ -983,6 +990,8 @@ SetVisibilityByPassages ();
 		VID_UnlockBuffer ();
 		S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
+	} else {
+		ed_time1 = Sys_FloatTime();
 	}
 	
 	R_EdgeDrawing ();
@@ -992,11 +1001,9 @@ SetVisibilityByPassages ();
 		VID_UnlockBuffer ();
 		S_ExtraUpdate ();	// don't let sound get messed up if going slow
 		VID_LockBuffer ();
-	}
-	
-	if (r_dspeeds.value)
-	{
-		se_time2 = Sys_FloatTime ();
+	} else {
+		ed_time2 = Sys_FloatTime();
+		se_time2 = ed_time2;
 		de_time1 = se_time2;
 	}
 

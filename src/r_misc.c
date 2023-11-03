@@ -213,21 +213,43 @@ R_PrintDSpeeds
 */
 void R_PrintDSpeeds (void)
 {
-	float	ms, dp_time, r_time2, rw_time, db_time, se_time, de_time, dv_time;
+	float	ms, ds_time, ed_time, dp_time, r_time2, rw_time, db_time, se_time, de_time, dv_time, scr_time;
+	char buf[256];
+	int off = 64;
 
 	r_time2 = Sys_FloatTime ();
 
+	ds_time = (ds_time2 - ds_time1) * 1000;
+	ed_time = (ed_time2 - ed_time1) * 1000;
 	dp_time = (dp_time2 - dp_time1) * 1000;
 	rw_time = (rw_time2 - rw_time1) * 1000;
 	db_time = (db_time2 - db_time1) * 1000;
 	se_time = (se_time2 - se_time1) * 1000;
 	de_time = (de_time2 - de_time1) * 1000;
 	dv_time = (dv_time2 - dv_time1) * 1000;
+	scr_time = (scr_time2 - scr_time1) * 1000;
 	ms = (r_time2 - r_time1) * 1000;
 
-	Con_Printf ("%3i %4.1fp %3iw %4.1fb %3is %4.1fe %4.1fv\n",
-				(int)ms, dp_time, (int)rw_time, db_time, (int)se_time, de_time,
-				dv_time);
+
+
+	sprintf (buf, "setup  %4.1f", ds_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "edge   %4.1f", ed_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "world  %3i", (int)rw_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "ents   %4.1f", de_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "brush  %4.1f", db_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "view   %4.1f", dv_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "parts  %4.1f", dp_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "2d     %4.1f", scr_time);
+	Draw_String(0,off+=8,buf);
+	sprintf (buf, "total   %3ims\n", (int)ms);
+	Draw_String(0,off+=10,buf);
 }
 
 
