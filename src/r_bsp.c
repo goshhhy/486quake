@@ -439,6 +439,48 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 	}
 }
 
+// original implementation
+qboolean R_CullBox(short mins[], short maxs[], int clipflags) {
+	int i, *pindex;
+	vec3_t acceptpt, rejectpt;
+	float d;
+	// cull the clipping planes if not trivial accept
+	// FIXME: the compiler is doing a lousy job of optimizing here; it could be
+	//  twice as fast in ASM
+	if ( clipflags ) {
+		for ( i=0 ; i<4 ; i++ ) {
+			if ( ! ( clipflags & (1<<i) ) )
+				continue;	// don't need to clip against it
+
+			// generate accept and reject points
+			// FIXME: do with fast look-ups or integer tests based on the sign bit
+			// of the floating point values
+
+			pindex = pfrustum_indexes[i];
+
+			rejectpt[0] = (float)mins[pindex[0]];
+			rejectpt[1] = (float)mins[pindex[1]];
+			rejectpt[2] = (float)mins[pindex[2]];
+			
+			d = DotProduct (rejectpt, view_clipplanes[i].normal);
+			d -= view_clipplanes[i].dist;
+
+			if (d <= 0)
+				return true;
+
+			acceptpt[0] = (float)maxs[pindex[0]];
+			acceptpt[1] = (float)maxs[pindex[1]];
+			acceptpt[2] = (float)maxs[pindex[2]];
+
+			d = DotProduct (acceptpt, view_clipplanes[i].normal);
+			d -= view_clipplanes[i].dist;
+
+			if (d >= 0)
+				clipflags &= ~(1<<i);	// node is entirely on screen
+		}
+	}
+	return false;
+}
 
 /*
 ================
@@ -460,44 +502,9 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 	if (node->visframe != r_visframecount)
 		return;
 
-// cull the clipping planes if not trivial accept
-// FIXME: the compiler is doing a lousy job of optimizing here; it could be
-//  twice as fast in ASM
-	if (clipflags)
-	{
-		for (i=0 ; i<4 ; i++)
-		{
-			if (! (clipflags & (1<<i)) )
-				continue;	// don't need to clip against it
+	if (R_CullBox(node->minmaxs, node->minmaxs+3, clipflags))
+		return;
 
-		// generate accept and reject points
-		// FIXME: do with fast look-ups or integer tests based on the sign bit
-		// of the floating point values
-
-			pindex = pfrustum_indexes[i];
-
-			rejectpt[0] = (float)node->minmaxs[pindex[0]];
-			rejectpt[1] = (float)node->minmaxs[pindex[1]];
-			rejectpt[2] = (float)node->minmaxs[pindex[2]];
-			
-			d = DotProduct (rejectpt, view_clipplanes[i].normal);
-			d -= view_clipplanes[i].dist;
-
-			if (d <= 0)
-				return;
-
-			acceptpt[0] = (float)node->minmaxs[pindex[3+0]];
-			acceptpt[1] = (float)node->minmaxs[pindex[3+1]];
-			acceptpt[2] = (float)node->minmaxs[pindex[3+2]];
-
-			d = DotProduct (acceptpt, view_clipplanes[i].normal);
-			d -= view_clipplanes[i].dist;
-
-			if (d >= 0)
-				clipflags &= ~(1<<i);	// node is entirely on screen
-		}
-	}
-	
 // if a leaf node, draw stuff
 	if (node->contents < 0)
 	{
