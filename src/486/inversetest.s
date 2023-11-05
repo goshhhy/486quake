@@ -14,7 +14,7 @@ fp_1:           .single     1.0
 // in: %st(0), out: %st(0), clobber: %eax
 Inverse64k:
 	flds	fp_64k                  // :: 3 cycles
-	fdiv	%st(1),%st(0)           // :: 73 cycles
+	fdiv	%st(1),%st(0)           // :: 35 cycles
     ret                             // :: 5 cycles
     // Total on i486: 81 cycles  
 
