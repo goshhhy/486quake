@@ -45,6 +45,9 @@ cvar_t		_windowed_mouse = {"_windowed_mouse","0", true};
 cvar_t		m_filter = {"m_filter","0", true};
 float old_windowed_mouse;
 
+int			VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes, VGA_planar;
+byte		*VGA_pagebase;
+
 qboolean        mouse_avail;
 int             mouse_buttons=3;
 int             mouse_oldbuttonstate;
@@ -62,7 +65,6 @@ typedef struct
 	int output;
 } keymap_t;
 
-viddef_t vid; // global video state
 unsigned short d_8to16table[256];
 
 int		num_shades=32;
@@ -102,8 +104,6 @@ static long X11_buffersize;
 int vid_surfcachesize;
 void *vid_surfcache;
 
-void (*vid_menudrawfn)(void);
-void (*vid_menukeyfn)(int key);
 void VID_MenuKey (int key);
 
 typedef unsigned short PIXEL16;

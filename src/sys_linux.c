@@ -136,6 +136,11 @@ void Sys_Init(void)
 #endif
 }
 
+int ceil_cw, single_cw, double_cw;
+
+void Sys_SetFPCW() {
+}
+
 void Sys_Error (char *error, ...)
 { 
     va_list     argptr;
@@ -341,7 +346,6 @@ char *Sys_ConsoleInput(void)
 	return NULL;
 }
 
-#if !id386
 void Sys_HighFPPrecision (void)
 {
 }
@@ -349,7 +353,6 @@ void Sys_HighFPPrecision (void)
 void Sys_LowFPPrecision (void)
 {
 }
-#endif
 
 int main (int c, char **v)
 {
@@ -455,6 +458,3 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 
 }
 
-void Sys_SendKeyEvents (void)
-{
-}
