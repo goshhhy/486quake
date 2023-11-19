@@ -10,7 +10,7 @@ mkdir -p bin
 oasm=yes
 olto=yes
 
-for cpu in 386 486 cx4 586 686; do
+for cpu in 486 cx4 586; do
     for olevel in O3; do
         #for olto in yes no; do 
             #for oasm in yes no; do
