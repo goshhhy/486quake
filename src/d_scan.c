@@ -759,8 +759,16 @@ void D_DrawSpansCHorz (espan_t *pspan)
 			}
 
 			i = 0;
-			switch( spancount % 8 ) {
+			switch( spancount % 16 ) {
 				case 0: do {	WRITEPDEST(i++);
+				case 15:		WRITEPDEST(i++);
+				case 14:		WRITEPDEST(i++);
+				case 13:		WRITEPDEST(i++);
+				case 12:		WRITEPDEST(i++);
+				case 11:		WRITEPDEST(i++);
+				case 10:		WRITEPDEST(i++);
+				case 9:			WRITEPDEST(i++);
+				case 8:			WRITEPDEST(i++);
 				case 7: 		WRITEPDEST(i++);
 				case 6: 		WRITEPDEST(i++);
 				case 5: 		WRITEPDEST(i++);
@@ -768,7 +776,7 @@ void D_DrawSpansCHorz (espan_t *pspan)
 				case 3: 		WRITEPDEST(i++);
 				case 2: 		WRITEPDEST(i++);
 				case 1: 		WRITEPDEST(i++);
-				 		} while ( i < spancount );
+				} while ( i < spancount );
 				break;
 			}
 		// }

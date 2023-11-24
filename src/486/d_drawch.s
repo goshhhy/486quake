@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 //
 // d_draw16.s
 // x86 assembly-language horizontal 8-bpp span-drawing code, with 16-pixel
-// subdivision, for horizontal constant-z surfaces (floors, ceilings, etc)
+// subdivision.
 //
 
 #include "../asm_i386.h"
@@ -128,60 +128,47 @@ LSpanLoop:
 //
 // FIXME: pipeline FILD?
 //																						:: START
-	fildl	espan_t_v(%ebx)     // dv                                                   :: 9-12	: 4
+	fildl	espan_t_v(%ebx)     // dv                                                   :: 9-12 : 4 (2-4)
 	fsts	ftmp				// dv													:: 7
-	fmuls	C(d_zistepv)		// dv*d_zistepv 				                        :: 11	: 8
-	fildl	espan_t_u(%ebx)     // du | dv*d_zistepv                              		:: 9-12	: 4
-	fsts	ftmp2				// du | dv*d_zistepv									:: 7
-	fmuls	C(d_zistepu)		// du*d_zistepu | dv*d_zistepv 			        		:: 11	: 8
-	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv 			        		:: 8-20	: 7
-	fadds	C(d_ziorigin)		// 1/z 			                                     	:: 8-20	: 7
-	fsts	ftmp3				// 1/z													:: 7
+	fmuls	C(d_sdivzstepv)		// dv*d_sdivzstepv 				                        :: 11	: 8
+    fildl	espan_t_u(%ebx)     // du | dv*d_sdivzstepv                              	:: 9-12 : 4 (2-4)
+	fsts	ftmp2				// du | dv*d_sdivzstepv									:: 7
+	fmuls	C(d_sdivzstepu)		// du*d_sdivzstepu | dv*d_sdivzstepv 			        :: 11	: 8
+	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv 			        :: 8-20	: 7
+	fadds	C(d_sdivzorigin)	// s/z 			                                     	:: 8-20	: 7
 
-	fld		C(d_tdivzstepv)		// d_tdivzstepv | 1/z 			                        :: 3
-	fmuls	ftmp				// dv*d_tdivzstepv | 1/z  			                    :: 11	: 8
-		// div (1/z) by 65536, store in ftmp3
-		movl    ftmp3,%eax                                      					//	:: 						: 1-3
-		leal    -134217728(%eax),%ecx                           					//	:: 						: 2
-		movl    %ecx,ftmp4   														//	:: 						: 1
-	fld		C(d_tdivzstepu)		// d_tdivzstepu | dv*d_tdivzstepv | 1/z                 :: 3
-	fmuls	ftmp2				// du*d_tdivzstepu | dv*d_tdivzstepv | 1/z    			:: 11	: 8
-		// approximate 65536 / (1/z), store in ftmp4
-		movl	$0x86ef72e6,%eax													//	:: 						: 1
-		subl	ftmp3,%eax 															//	:: 						: 2
-		movl	%eax, ftmp3															//	:: 						: 1
-	faddp	%st(0),%st(1)		// du*d_tdivzstepu + dv*d_tdivzstepv | 1/z				:: 8-20	: 7
-		movl	C(d_viewbuffer),%ecx												//	:: 						: 1-3
-		movl	espan_t_v(%ebx),%eax												// 	:: 						: 1-3
-		movl	%ebx,pspantemp	// preserve spans pointer							//	:: 						: 1
-	fadds	C(d_tdivzorigin)	// t/z | 1/z 											:: 8-20	: 7
-		movl	C(tadjust),%edx														//							: 1-3
-		movl	C(sadjust),%esi														//							: 1-3
-		movl	C(d_scantable)(,%eax,4),%edi	// v * screenwidth												: 1-3
+	fld		C(d_tdivzstepv)		// d_tdivzstepv | s/z 			                        :: 3
+	fmuls	ftmp				// dv*d_tdivzstepv | s/z  			                    :: 11	: 8
+	fld		C(d_tdivzstepu)		// d_tdivzstepu | dv*d_tdivzstepv | s/z                 :: 3
+	fmuls	ftmp2				// du*d_tdivzstepu | dv*d_tdivzstepv | s/z    			:: 11	: 8
+	faddp	%st(0),%st(1)		// du*d_tdivzstepu + dv*d_tdivzstepv | s/z				:: 8-20	: 7
+	fadds	C(d_tdivzorigin)	// t/z | s/z 											:: 8-20	: 7
 
-	fld		C(d_sdivzstepv)		// d_sdivzstepv | t/z | 1/z                        		:: 3
-	fmuls	ftmp				// dv*d_sdivzstepv | t/z | 1/z							:: 11	: 8
-		addl	%ecx,%edi															//							: 1
-		movl	espan_t_u(%ebx),%ecx												//							: 1-3
-		addl	%ecx,%edi				// pdest = &pdestspan[scans->u];										: 1
-		movl	espan_t_count(%ebx),%ecx											//							: 1-3
-	fld		C(d_sdivzstepu)		// d_sdivzstepu | dv*d_sdivzstepv | t/z | 1/z			:: 3
-	fmuls	ftmp2				// du*d_sdivzstepu | dv*d_sdivzstepv | t/z | 1/z        :: 11	: 8
-	faddp	%st(0),%st(1)		// du*d_sdivzstepu + dv*d_sdivzstepv | t/z | 1/z        :: 8-20	: 7
-	fadds	C(d_sdivzorigin)	// s/z | t/z | 1/z     		                            :: 8-20	: 7
-	fxch	%st(2)				// 1/z | t/z | s/z										:: 4
-	
-	// single iteration of newton's method to refine approximation
-	
-	flds	ftmp3				// n 													:: 3
-	/*
-	fmuls	ftmp4				// n * d												:: 11	: 8
-	fsubr	float_1				// 1 - ( n * d )										:: 8-20	: 7
-	fmul	ftmp3				// n * ( 1 - ( n * d ) )								:: 11	: 8
-	fadd	ftmp3				// z*64k | 1/z | t/z | s/z								:: 8-20	| 7
-	*/
-                                //                                                      :: TOTAL 210-312
-								//														::		16 of 128 concurrent cycles filled (13%)
+	fld		C(d_zistepv)		// d_zistepv | t/z | s/z                        		:: 3
+	fmuls	ftmp				// dv*d_zistepv | t/z | s/z								:: 11	: 8
+	fld		C(d_zistepu)		// d_zistepu | dv*d_zistepv | t/z | s/z					:: 3
+	fmuls	ftmp2				// du*d_zistepu | dv*d_zistepv | t/z | s/z              :: 11	: 8
+	faddp	%st(0),%st(1)		// du*d_zistepu + dv*d_zistepv | t/z | s/z             	:: 8-20	: 7
+	fadds	C(d_ziorigin)		// 1/z | t/z | s/z                                      :: 8-20	: 7
+
+	flds	fp_64k				// fp_64k | 1/z | t/z | s/z								:: 3
+// calculate and clamp s & t
+	fdiv	%st(1),%st(0)		// z*64k | 1/z | t/z | s/z								:: 73 	: 70
+// point %edi to the first pixel in the span
+		movl	C(d_viewbuffer),%ecx												//	:: 1
+		movl	espan_t_v(%ebx),%eax												// 	:: 1
+		movl	%ebx,pspantemp	// preserve spans pointer							//	:: 1
+
+		movl	C(tadjust),%edx														//	:: 1
+		movl	C(sadjust),%esi														//	:: 1
+		movl	C(d_scantable)(,%eax,4),%edi	// v * screenwidth						:: 1
+		addl	%ecx,%edi															//	:: 1
+		movl	espan_t_u(%ebx),%ecx												//	:: 1
+		addl	%ecx,%edi				// pdest = &pdestspan[scans->u];				:: 1
+		movl	espan_t_count(%ebx),%ecx											//	:: 1
+                                //                                                      :: TOTAL 234-312
+								//														::		10 of 168 concurrent cycles filled
+
 //
 // now start the FDIV for the end of the span
 //
@@ -191,7 +178,7 @@ LSpanLoop:
 	fistpl	s				// z*64k | 1/z | t/z | s/z
 	fmul	%st(2),%st(0)	// t | 1/z | t/z | s/z
 		cmpl	$16,%ecx
-		ja		LSetupNotLast1
+		ja		LCleanup1
 
 		decl	%ecx
 		jz		LCleanup1		// if only one pixel, no need to start an FDIV
@@ -227,29 +214,6 @@ LSpanLoop:
 LCleanup1:
 // finish finishing up the s and t calcs
 	fistpl	t				// 1/z | t/z | s/z
-	jmp		LFDIVInFlight1
-
-	.align	4
-LSetupNotLast1:
-// finish finishing up the s and t calcs
-	fistpl	t				// 1/z | t/z | s/z
-
-	fadds	zi16stepu		// 1/z adj | t/z | s/z
-	flds	sdivz16stepu	// sdivz | 1/z adj | t/z | s/z
-	faddp	%st(0),%st(3)			// 1/z adj | t/z | s/z adj
-	flds	tdivz16stepu	// tdivz | 1/z adj | t/z | s/z adj
-	faddp	%st(0),%st(2)	// 1/z adj | t/z adj | s/z adj
-	flds	fp_64k			// fp_64k | 1/z adj | t/z adj | s/z adj
-	fdiv	%st(1),%st(0)	// z = 1/1/z
-							// this is what we've gone to all this trouble to
-							//  overlap
-	/*
-	fsts	ftmp				// 1/z | t/z | s/z
-	movl	$0x86ef72e6,%eax
-	subl	ftmp,%eax 
-	movl	%eax, ftmp
-	flds	ftmp				// z*64k | 1/z | t/z | s/z
-	*/
 
 LFDIVInFlight1:
 
@@ -435,11 +399,13 @@ LSetUp1:
 //
 	movl	counttemp,%ecx
 	cmpl	$16,%ecx			// more than one segment after this?
-	ja		LSetupNotLast2	// yes
+	ja		LFDIVInFlight2		
 
 	decl	%ecx
 	jz		LFDIVInFlight2	// if only one pixel, no need to start an FDIV
 	movl	%ecx,spancountminus1
+
+	// this is the last segment; start the fdiv for the next line
 
 	fildl	spancountminus1		//														:: 9-12
 	fsts	ftmp				//														:: 7
@@ -457,40 +423,6 @@ LSetUp1:
 	flds	fp_64k				// 64k | 1/z adj | t/z adj | s/z adj
 	fdiv	%st(1),%st(0)	// this is what we've gone to all this trouble to
 							//  overlap
-
-	/*
-	fsts	ftmp				// 1/z | t/z | s/z
-	push	%eax
-	movl	$0x86ef72e6,%eax
-	subl	ftmp,%eax 
-	movl	%eax, ftmp
-	pop		%eax
-	flds	ftmp				// z*64k | 1/z | t/z | s/z
-	*/
-
-	jmp		LFDIVInFlight2
-
-	.align	4
-LSetupNotLast2:
-	fadds	zi16stepu		// 1/z adj | t/z | s/z
-	flds	sdivz16stepu	// sdivz | 1/z adj | t/z | s/z
-	faddp	%st(0),%st(3)			// 1/z adj | t/z | s/z adj
-	flds	tdivz16stepu	// tdivz | 1/z adj | t/z | s/z adj
-	faddp	%st(0),%st(2)	// 1/z adj | t/z adj | s/z adj
-	flds	fp_64k			// fp_64k | 1/z adj | t/z adj | s/z adj
-	fdiv	%st(1),%st(0)	// z = 1/1/z
-							// this is what we've gone to all this trouble to
-							//  overlap
-
-	/*
-	fsts	ftmp				// 1/z | t/z | s/z
-	push 	%eax
-	movl	$0x86ef72e6,%eax
-	subl	ftmp,%eax 
-	movl	%eax, ftmp
-	pop		%eax
-	flds	ftmp				// z*64k | 1/z | t/z | s/z
-	*/
 
 LFDIVInFlight2:
 	movl	%ecx,counttemp

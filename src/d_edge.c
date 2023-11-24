@@ -166,6 +166,7 @@ void D_CalcGradients (msurface_t *pface)
 	bbextentt = ((pface->extents[1] << 16) >> miplevel) - 1;
 }
 
+extern cvar_t r_perfdebug;
 
 /*
 ==============
@@ -309,7 +310,10 @@ void D_DrawSurfaces (void)
 
 				if ( (*(unsigned int*)(&d_zistepu) & 0x7fffffff) == 0 ) { //ugly... but fast
 					//D_DrawSolidSurface (s, 251);
-					D_DrawSpansCHorz(s->spans);
+					//if (r_perfdebug.value == 0)
+						(*d_drawspans) (s->spans);
+					//else
+						//D_DrawSpansCHorz(s->spans);
 				} else {
 					//if ( ( s->flags & SURF_CZVERT ) && cl.viewangles[PITCH] == 0.0f ) {
 					//	D_DrawSolidSurface (s, 243);
