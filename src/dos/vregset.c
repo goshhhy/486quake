@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <dos.h>
 #include <conio.h>
 
-#include "quakedef.h"
+#include "../quakedef.h"
 #include "vregset.h"
 
 //#define outportb	loutportb

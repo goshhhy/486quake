@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <sys/nearptr.h>
 #include <conio.h>
 
-#include "quakedef.h"
+#include "../quakedef.h"
 #include "dosisms.h"
 
 #define MINIMUM_WIN_MEMORY			0x800000

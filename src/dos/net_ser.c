@@ -19,10 +19,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // net_ser.c
 
-#include "quakedef.h"
+#include "../quakedef.h"
 #include "net_ser.h"
 #include "dosisms.h"
-#include "crc.h"
+#include "../crc.h"
 
 #include "net_comx.c"
 

@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // in_mouse.c -- dos mouse code
 
-#include "quakedef.h"
+#include "../quakedef.h"
 #include "dosisms.h"
 
 #define AUX_FLAG_FREELOOK	0x00000001

@@ -2,8 +2,8 @@
 // sys_dosa.s
 // x86 assembly-language DOS-dependent routines.
 
-#include "asm_i386.h"
-#include "quakeasm.h"
+#include "../asm_i386.h"
+#include "../quakeasm.h"
 
 
 	.data

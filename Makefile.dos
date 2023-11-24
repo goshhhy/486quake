@@ -308,7 +308,7 @@ $(BUILDDIR)/486quake/mathlib.o :  $(SRC_DIR)/mathlib.c
 $(BUILDDIR)/486quake/model.o :    $(SRC_DIR)/model.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/net_bw.o : $(SRC_DIR)/net_bw.c
+$(BUILDDIR)/486quake/net_bw.o : $(SRC_DIR)/dos/net_bw.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/net_dgrm.o : $(SRC_DIR)/net_dgrm.c
@@ -320,7 +320,7 @@ $(BUILDDIR)/486quake/net_loop.o : $(SRC_DIR)/net_loop.c
 $(BUILDDIR)/486quake/net_main.o : $(SRC_DIR)/net_main.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/net_ser.o : $(SRC_DIR)/net_ser.c
+$(BUILDDIR)/486quake/net_ser.o : $(SRC_DIR)/dos/net_ser.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/net_vcr.o :  $(SRC_DIR)/net_vcr.c
@@ -329,13 +329,13 @@ $(BUILDDIR)/486quake/net_vcr.o :  $(SRC_DIR)/net_vcr.c
 $(BUILDDIR)/486quake/net_udp.o :  $(SRC_DIR)/net_udp.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/net_ipx.o :  $(SRC_DIR)/net_ipx.c
+$(BUILDDIR)/486quake/net_ipx.o :  $(SRC_DIR)/dos/net_ipx.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/net_mp.o :  $(SRC_DIR)/net_mp.c
+$(BUILDDIR)/486quake/net_mp.o :  $(SRC_DIR)/dos/net_mp.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/net_dos.o :  $(SRC_DIR)/net_dos.c
+$(BUILDDIR)/486quake/net_dos.o :  $(SRC_DIR)/dos/net_dos.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/nonintel.o : $(SRC_DIR)/nonintel.c
@@ -422,25 +422,25 @@ $(BUILDDIR)/486quake/wad.o :      $(SRC_DIR)/wad.c
 $(BUILDDIR)/486quake/world.o :    $(SRC_DIR)/world.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/cd_audio.o : $(SRC_DIR)/cd_audio.c
+$(BUILDDIR)/486quake/cd_audio.o : $(SRC_DIR)/dos/cd_audio.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/sys_dos.o :$(SRC_DIR)/sys_dos.c
+$(BUILDDIR)/486quake/sys_dos.o :$(SRC_DIR)/dos/sys_dos.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/in_dos.o :$(SRC_DIR)/in_dos.c
+$(BUILDDIR)/486quake/in_dos.o :$(SRC_DIR)/dos/in_dos.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/vid_dos.o:$(SRC_DIR)/vid_dos.c
+$(BUILDDIR)/486quake/vid_dos.o:$(SRC_DIR)/dos/vid_dos.c
 	$(DO_O_CC)
 
-$(BUILDDIR)/486quake/vid_vga.o:$(SRC_DIR)/vid_vga.c
+$(BUILDDIR)/486quake/vid_vga.o:$(SRC_DIR)/dos/vid_vga.c
 	$(DO_O_CC)
 
-$(BUILDDIR)/486quake/vid_ext.o:$(SRC_DIR)/vid_ext.c
+$(BUILDDIR)/486quake/vid_ext.o:$(SRC_DIR)/dos/vid_ext.c
 	$(DO_O_CC)
 
-$(BUILDDIR)/486quake/vregset.o:$(SRC_DIR)/vregset.c
+$(BUILDDIR)/486quake/vregset.o:$(SRC_DIR)/dos/vregset.c
 	$(DO_O_CC)
 
 $(BUILDDIR)/486quake/snd_dma.o :  $(SRC_DIR)/snd_dma.c
@@ -452,19 +452,19 @@ $(BUILDDIR)/486quake/snd_mem.o :  $(SRC_DIR)/snd_mem.c
 $(BUILDDIR)/486quake/snd_mix.o :  $(SRC_DIR)/snd_mix.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/snd_dos.o :$(SRC_DIR)/snd_dos.c
+$(BUILDDIR)/486quake/snd_dos.o :$(SRC_DIR)/dos/snd_dos.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/snd_gus.o :$(SRC_DIR)/snd_gus.c
+$(BUILDDIR)/486quake/snd_gus.o :$(SRC_DIR)/dos/snd_gus.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/mplib.o :$(SRC_DIR)/mplib.c
+$(BUILDDIR)/486quake/mplib.o :$(SRC_DIR)/dos/mplib.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/mplpc.o :$(SRC_DIR)/mplpc.c
+$(BUILDDIR)/486quake/mplpc.o :$(SRC_DIR)/dos/mplpc.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/dos_v2.o :  $(SRC_DIR)/dos_v2.c
+$(BUILDDIR)/486quake/dos_v2.o :  $(SRC_DIR)/dos/dos_v2.c
 	$(DO_CC)
 
 #####
@@ -523,7 +523,7 @@ $(BUILDDIR)/486quake/r_aclipa.o : $(SRC_DIR)/$(OCPU)/r_aclipa.s
 $(BUILDDIR)/486quake/snd_mixa.o : $(SRC_DIR)/snd_mixa.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/sys_dosa.o : $(SRC_DIR)/sys_dosa.s
+$(BUILDDIR)/486quake/sys_dosa.o : $(SRC_DIR)/dos/sys_dosa.s
 	$(DO_AS)
 
 #############################################################################
