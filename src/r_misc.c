@@ -308,8 +308,14 @@ void R_TransformFrustum (void)
 		v2[2] = v[1]*vright[2] + v[2]*vup[2] + v[0]*vpn[2];
 
 		VectorCopy (v2, view_clipplanes[i].normal);
-
+		
+		view_clipplanes[i].inormal[0] = view_clipplanes[i].normal[0] * 256;
+		view_clipplanes[i].inormal[1] = view_clipplanes[i].normal[1] * 256;
+		view_clipplanes[i].inormal[2] = view_clipplanes[i].normal[2] * 256;
+		
 		view_clipplanes[i].dist = DotProduct (modelorg, v2);
+
+		view_clipplanes[i].idist = view_clipplanes[i].dist;
 	}
 }
 

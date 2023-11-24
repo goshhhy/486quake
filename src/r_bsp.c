@@ -440,16 +440,16 @@ void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags)
 }
 
 // original implementation
-qboolean R_CullBox(short mins[], short maxs[], int clipflags) {
+qboolean R_CullBox(short minmaxs[], int * clipflags) {
 	int i, *pindex;
 	vec3_t acceptpt, rejectpt;
 	float d;
 	// cull the clipping planes if not trivial accept
 	// FIXME: the compiler is doing a lousy job of optimizing here; it could be
 	//  twice as fast in ASM
-	if ( clipflags ) {
+	if ( *clipflags ) {
 		for ( i=0 ; i<4 ; i++ ) {
-			if ( ! ( clipflags & (1<<i) ) )
+			if ( ! ( *clipflags & (1<<i) ) )
 				continue;	// don't need to clip against it
 
 			// generate accept and reject points
@@ -458,9 +458,9 @@ qboolean R_CullBox(short mins[], short maxs[], int clipflags) {
 
 			pindex = pfrustum_indexes[i];
 
-			rejectpt[0] = (float)mins[pindex[0]];
-			rejectpt[1] = (float)mins[pindex[1]];
-			rejectpt[2] = (float)mins[pindex[2]];
+			rejectpt[0] = (float)minmaxs[pindex[0]];
+			rejectpt[1] = (float)minmaxs[pindex[1]];
+			rejectpt[2] = (float)minmaxs[pindex[2]];
 			
 			d = DotProduct (rejectpt, view_clipplanes[i].normal);
 			d -= view_clipplanes[i].dist;
@@ -468,26 +468,106 @@ qboolean R_CullBox(short mins[], short maxs[], int clipflags) {
 			if (d <= 0)
 				return true;
 
-			acceptpt[0] = (float)maxs[pindex[0]];
-			acceptpt[1] = (float)maxs[pindex[1]];
-			acceptpt[2] = (float)maxs[pindex[2]];
+			acceptpt[0] = (float)minmaxs[pindex[3+0]];
+			acceptpt[1] = (float)minmaxs[pindex[3+1]];
+			acceptpt[2] = (float)minmaxs[pindex[3+2]];
 
 			d = DotProduct (acceptpt, view_clipplanes[i].normal);
 			d -= view_clipplanes[i].dist;
 
 			if (d >= 0)
-				clipflags &= ~(1<<i);	// node is entirely on screen
+				*clipflags &= ~(1<<i);	// node is entirely on screen
 		}
 	}
 	return false;
 }
+
+#define DotProductS8(x,y) ( \
+		( (int)( x[0] * y[0] ) / 256 ) + \
+		( (int)( x[1] * y[1] ) / 256 ) + \
+		( (int)( x[2] * y[2] ) / 256 ) )
+
+// integer version?
+qboolean R_CullBox2(short minmaxs[], int * clipflags) {
+	int i, *pindex;
+	int acceptpt[3], rejectpt[3];
+	int d;
+	// cull the clipping planes if not trivial accept
+	// FIXME: the compiler is doing a lousy job of optimizing here; it could be
+	//  twice as fast in ASM
+
+	if ( *clipflags ) {
+		for ( i=0 ; i<4 ; i++ ) {
+			if ( ! ( *clipflags & (1<<i) ) )
+				continue;	// don't need to clip against it
+	
+			// generate accept and reject points
+			// FIXME: do with fast look-ups or integer tests based on the sign bit
+			// of the floating point values
+	
+			pindex = pfrustum_indexes[i];
+	
+			rejectpt[0] = minmaxs[pindex[0]];
+			rejectpt[1] = minmaxs[pindex[1]];
+			rejectpt[2] = minmaxs[pindex[2]];
+			
+			d = DotProductS8(rejectpt, view_clipplanes[i].inormal);
+			d -= view_clipplanes[i].idist;
+	
+			if (d <= 0)
+				return true;
+	
+			acceptpt[0] = minmaxs[pindex[3+0]];
+			acceptpt[1] = minmaxs[pindex[3+1]];
+			acceptpt[2] = minmaxs[pindex[3+2]];
+	
+			d = DotProductS8(acceptpt, view_clipplanes[i].inormal);
+			d -= view_clipplanes[i].idist;
+	
+			if (d >= 0)
+				*clipflags &= ~(1<<i);	// node is entirely on screen
+		}
+	}
+	return false;
+}
+
+void R_CullMismatch(short mins[], short maxs[], int clipflags) {
+	int i, *pindex;
+	int acceptpt[3], rejectpt[3], normal[3];
+	int d, dist;
+
+	Con_Printf("mismatch mins[%hi %hi %hi] maxs[%hi %hi %hi] flags %u\n",
+				mins[0], mins[1], mins[2],
+				maxs[0], maxs[1], maxs[2],
+				clipflags);
+
+	if ( clipflags ) {
+		for ( i=0 ; i<4 ; i++ ) {
+			if ( ! ( clipflags & (1<<i) ) )
+				continue;	// don't need to clip against it
+
+			Con_Printf("  normal[%i] {%f %f %f}\n", i,
+						view_clipplanes[i].normal[0],
+						view_clipplanes[i].normal[1],
+						view_clipplanes[i].normal[2]
+					);
+			Con_Printf("  dist %f pindex {%i %i %i}\n\n", 
+					view_clipplanes[i].dist,
+					pfrustum_indexes[i][0],
+					pfrustum_indexes[i][1],
+					pfrustum_indexes[i][2]);
+	
+		}
+	}
+}
+
 
 /*
 ================
 R_RecursiveWorldNode
 ================
 */
-void R_RecursiveWorldNode (mnode_t *node, int clipflags)
+void R_RecursiveWorldNode (mnode_t *node, int clipflagsorig)
 {
 	int			i, c, side, *pindex;
 	vec3_t		acceptpt, rejectpt;
@@ -495,6 +575,8 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 	msurface_t	*surf, **mark;
 	mleaf_t		*pleaf;
 	double		d, dot;
+    qboolean	skip;
+	int clipflags = clipflagsorig;
 
 	if (node->contents == CONTENTS_SOLID)
 		return;		// solid
@@ -502,7 +584,13 @@ void R_RecursiveWorldNode (mnode_t *node, int clipflags)
 	if (node->visframe != r_visframecount)
 		return;
 
-	if (R_CullBox(node->minmaxs, node->minmaxs+3, clipflags))
+	if (r_perfdebug.value == 0) {
+		skip = R_CullBox(node->minmaxs, &clipflags);	
+	} else {
+		skip = R_CullBox2(node->minmaxs, &clipflags);
+	}
+
+	if (skip)
 		return;
 
 // if a leaf node, draw stuff

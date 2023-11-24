@@ -94,7 +94,8 @@ typedef struct clipplane_s
 	struct		clipplane_s	*next;
 	byte		leftedge;
 	byte		rightedge;
-	byte		reserved[2];
+	short		inormal[3];
+	short		idist;
 } clipplane_t;
 
 extern	clipplane_t	view_clipplanes[4];

@@ -100,8 +100,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define cp_next			16
 #define cp_leftedge		20
 #define cp_rightedge	21
-#define cp_reserved		22
-#define cp_size			24
+#define cp_inormal		22
+#define cp_idist		28
+#define cp_size			32
 
 // medge_t structure
 // !!! if this is changed, it must be changed in model.h too !!!
