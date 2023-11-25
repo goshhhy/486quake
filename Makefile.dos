@@ -218,19 +218,19 @@ $(BUILDDIR)/$(BINNAME).exe : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
 
 ####
 
-$(BUILDDIR)/486quake/cl_demo.o :  $(SRC_DIR)/cl_demo.c
+$(BUILDDIR)/486quake/cl_demo.o :  $(SRC_DIR)/client/cl_demo.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/cl_input.o : $(SRC_DIR)/cl_input.c
+$(BUILDDIR)/486quake/cl_input.o : $(SRC_DIR)/client/cl_input.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/cl_main.o :  $(SRC_DIR)/cl_main.c
+$(BUILDDIR)/486quake/cl_main.o :  $(SRC_DIR)/client/cl_main.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/cl_parse.o : $(SRC_DIR)/cl_parse.c
+$(BUILDDIR)/486quake/cl_parse.o : $(SRC_DIR)/client/cl_parse.c
 	$(DO_CC)
 
-$(BUILDDIR)/486quake/cl_tent.o :  $(SRC_DIR)/cl_tent.c
+$(BUILDDIR)/486quake/cl_tent.o :  $(SRC_DIR)/client/cl_tent.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/chase.o :    $(SRC_DIR)/chase.c
