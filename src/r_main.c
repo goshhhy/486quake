@@ -22,8 +22,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
-//define	PASSAGES
-
 void		*colormap;
 vec3_t		viewlightvec;
 alight_t	r_viewlighting = {128, 192, viewlightvec};
@@ -141,9 +139,6 @@ cvar_t	r_maxspans = {"r_maxspans", "5000"};
 cvar_t	r_perfdebug = {"r_perfdebug", "0"};
 
 extern cvar_t	scr_fov;
-
-void CreatePassages (void);
-void SetVisibilityByPassages (void);
 
 /*
 ==================
@@ -301,9 +296,6 @@ void R_NewMap (void)
 
 	r_dowarpold = false;
 	r_viewchanged = false;
-#ifdef PASSAGES
-CreatePassages ();
-#endif
 }
 
 
@@ -974,11 +966,7 @@ void R_RenderView_ (void)
 
 	R_SetupFrame ();
 
-#ifdef PASSAGES
-SetVisibilityByPassages ();
-#else
 	R_MarkLeaves ();	// done here so we know if we're in water
-#endif
 
 	if (r_dspeeds.value)
 		ds_time2 = Sys_FloatTime ();
