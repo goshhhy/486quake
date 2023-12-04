@@ -15,6 +15,7 @@ OCPU ?= 486
 OLTO ?= yes
 OASM ?= yes
 OSTRIP ?=-s
+RENDERER ?=std
 
 DEFS :=
 
@@ -62,7 +63,7 @@ CC=i586-pc-msdosdjgpp-gcc
 
 CC_VERSION=$(shell $(CC) --version | head -n 1 | awk -F " " '{print $3}')
 
-BASE_CFLAGS=-Dstricmp=strcasecmp $(DEFS) -DSUBARCH="\"$(OCPU)\"" -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\""
+BASE_CFLAGS=-Dstricmp=strcasecmp $(DEFS) -DSUBARCH="\"$(OCPU)\"" -DOLEVEL="\"$(OLEVEL)\"" -DREVISION="$(REVISION)" -DLTOFLAGS="\" $(LTOFLAGS)\"" -Did386=$(ID386) -DCCVERSION="\"$(CC_VERSION)\"" -I src/ -I "src/r_$(RENDERER)/"
 RELEASE_CFLAGS=$(BASE_CFLAGS) $(OSTRIP) -$(OLEVEL) -march=$(OARCH) -mtune=$(OTUNE) -ffast-math \
 								-fno-unwind-tables -fno-asynchronous-unwind-tables -funroll-loops \
 								-fno-stack-protector -fexpensive-optimizations $(LTOFLAGS)\
@@ -112,18 +113,6 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/console.o \
 	$(BUILDDIR)/486quake/crc.o \
 	$(BUILDDIR)/486quake/cvar.o \
-	$(BUILDDIR)/486quake/draw.o \
-	$(BUILDDIR)/486quake/d_edge.o \
-	$(BUILDDIR)/486quake/d_fill.o \
-	$(BUILDDIR)/486quake/d_init.o \
-	$(BUILDDIR)/486quake/d_modech.o \
-	$(BUILDDIR)/486quake/d_part.o \
-	$(BUILDDIR)/486quake/d_polyse.o \
-	$(BUILDDIR)/486quake/d_scan.o \
-	$(BUILDDIR)/486quake/d_sky.o \
-	$(BUILDDIR)/486quake/d_sprite.o \
-	$(BUILDDIR)/486quake/d_surf.o \
-	$(BUILDDIR)/486quake/d_zpoint.o \
 	$(BUILDDIR)/486quake/host.o \
 	$(BUILDDIR)/486quake/host_cmd.o \
 	$(BUILDDIR)/486quake/keys.o \
@@ -143,20 +132,6 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/pr_cmds.o \
 	$(BUILDDIR)/486quake/pr_edict.o \
 	$(BUILDDIR)/486quake/pr_exec.o \
-	$(BUILDDIR)/486quake/r_aclip.o \
-	$(BUILDDIR)/486quake/r_alias.o \
-	$(BUILDDIR)/486quake/r_bsp.o \
-	$(BUILDDIR)/486quake/r_light.o \
-	$(BUILDDIR)/486quake/r_draw.o \
-	$(BUILDDIR)/486quake/r_efrag.o \
-	$(BUILDDIR)/486quake/r_edge.o \
-	$(BUILDDIR)/486quake/r_misc.o \
-	$(BUILDDIR)/486quake/r_main.o \
-	$(BUILDDIR)/486quake/r_sky.o \
-	$(BUILDDIR)/486quake/r_sprite.o \
-	$(BUILDDIR)/486quake/r_surf.o \
-	$(BUILDDIR)/486quake/r_part.o \
-	$(BUILDDIR)/486quake/r_vars.o \
 	$(BUILDDIR)/486quake/screen.o \
 	$(BUILDDIR)/486quake/sbar.o \
 	$(BUILDDIR)/486quake/sv_main.o \
@@ -184,31 +159,12 @@ all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 	$(BUILDDIR)/486quake/mplib.o \
 	$(BUILDDIR)/486quake/mplpc.o \
 	\
-	$(BUILDDIR)/486quake/d_copy.o \
-	$(BUILDDIR)/486quake/d_draw.o \
-	$(BUILDDIR)/486quake/d_draw16.o \
-	$(BUILDDIR)/486quake/d_parta.o \
-	$(BUILDDIR)/486quake/d_polysa.o \
-	$(BUILDDIR)/486quake/d_scana.o \
-	$(BUILDDIR)/486quake/d_spr8.o \
-	$(BUILDDIR)/486quake/d_varsa.o \
 	$(BUILDDIR)/486quake/math.o \
-	$(BUILDDIR)/486quake/r_aliasa.o \
-	$(BUILDDIR)/486quake/r_drawa.o \
-	$(BUILDDIR)/486quake/r_edgea.o \
-	$(BUILDDIR)/486quake/r_varsa.o \
-	$(BUILDDIR)/486quake/surf16.o \
-	$(BUILDDIR)/486quake/surf8.o \
 	$(BUILDDIR)/486quake/worlda.o \
-	$(BUILDDIR)/486quake/r_aclipa.o \
 	$(BUILDDIR)/486quake/snd_mixa.o \
 	$(BUILDDIR)/486quake/sys_dosa.o
     
-ifneq "$(OASM)" "yes"
-486QUAKE_COBJS = \
-	$(BUILDDIR)/486quake/d_vars.o \
-
-endif
+include src/r_${RENDERER}/renderer.mk
 
 $(BUILDDIR)/$(BINNAME) : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
 	$(CC) $(RELEASE_CFLAGS) -o $@ -Wl,--start-group $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS) -Wl,--end-group
@@ -249,45 +205,6 @@ $(BUILDDIR)/486quake/crc.o :      $(SRC_DIR)/crc.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/cvar.o :     $(SRC_DIR)/cvar.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/draw.o :     $(SRC_DIR)/draw.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_edge.o :   $(SRC_DIR)/d_edge.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_fill.o :   $(SRC_DIR)/d_fill.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_init.o :   $(SRC_DIR)/d_init.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_modech.o : $(SRC_DIR)/d_modech.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_part.o :   $(SRC_DIR)/d_part.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_polyse.o : $(SRC_DIR)/d_polyse.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_scan.o :   $(SRC_DIR)/d_scan.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_sky.o :    $(SRC_DIR)/d_sky.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_sprite.o : $(SRC_DIR)/d_sprite.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_surf.o :   $(SRC_DIR)/d_surf.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_vars.o :   $(SRC_DIR)/d_vars.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/d_zpoint.o : $(SRC_DIR)/d_zpoint.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/host.o :     $(SRC_DIR)/host.c
@@ -348,48 +265,6 @@ $(BUILDDIR)/486quake/pr_edict.o : $(SRC_DIR)/pr_edict.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/pr_exec.o :  $(SRC_DIR)/pr_exec.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_aclip.o :  $(SRC_DIR)/r_aclip.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_alias.o :  $(SRC_DIR)/r_alias.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_bsp.o :    $(SRC_DIR)/r_bsp.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_light.o :  $(SRC_DIR)/r_light.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_draw.o :   $(SRC_DIR)/r_draw.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_efrag.o :  $(SRC_DIR)/r_efrag.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_edge.o :   $(SRC_DIR)/r_edge.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_misc.o :   $(SRC_DIR)/r_misc.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_main.o :   $(SRC_DIR)/r_main.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_sky.o :    $(SRC_DIR)/r_sky.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_sprite.o : $(SRC_DIR)/r_sprite.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_surf.o :   $(SRC_DIR)/r_surf.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_part.o :   $(SRC_DIR)/r_part.c
-	$(DO_CC)
-
-$(BUILDDIR)/486quake/r_vars.o :   $(SRC_DIR)/r_vars.c
 	$(DO_CC)
 
 $(BUILDDIR)/486quake/screen.o :   $(SRC_DIR)/screen.c
@@ -469,55 +344,10 @@ $(BUILDDIR)/486quake/dos_v2.o :  $(SRC_DIR)/dos/dos_v2.c
 
 #####
 
-$(BUILDDIR)/486quake/d_copy.o :   $(SRC_DIR)/$(OCPU)/d_copy.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_draw.o :   $(SRC_DIR)/$(OCPU)/d_draw.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_draw16.o : $(SRC_DIR)/$(OCPU)/d_draw16.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_parta.o :  $(SRC_DIR)/$(OCPU)/d_parta.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_polysa.o : $(SRC_DIR)/$(OCPU)/d_polysa.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_scana.o :  $(SRC_DIR)/$(OCPU)/d_scana.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_spr8.o :   $(SRC_DIR)/$(OCPU)/d_spr8.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/d_varsa.o :  $(SRC_DIR)/d_varsa.s
-	$(DO_AS)
-
 $(BUILDDIR)/486quake/math.o :     $(SRC_DIR)/$(OCPU)/math.s
 	$(DO_AS)
 
-$(BUILDDIR)/486quake/r_aliasa.o : $(SRC_DIR)/$(OCPU)/r_aliasa.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/r_drawa.o :  $(SRC_DIR)/$(OCPU)/r_drawa.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/r_edgea.o :  $(SRC_DIR)/$(OCPU)/r_edgea.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/r_varsa.o :  $(SRC_DIR)/r_varsa.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/surf16.o :   $(SRC_DIR)/$(OCPU)/surf16.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/surf8.o :    $(SRC_DIR)/$(OCPU)/surf8.s
-	$(DO_AS)
-
 $(BUILDDIR)/486quake/worlda.o :   $(SRC_DIR)/$(OCPU)/worlda.s
-	$(DO_AS)
-
-$(BUILDDIR)/486quake/r_aclipa.o : $(SRC_DIR)/$(OCPU)/r_aclipa.s
 	$(DO_AS)
 
 $(BUILDDIR)/486quake/snd_mixa.o : $(SRC_DIR)/snd_mixa.s
