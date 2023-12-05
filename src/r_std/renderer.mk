@@ -1,4 +1,6 @@
 
+CFLAGS += -DSLOWDRAW
+
 486QUAKE_OBJS += \
 	$(BUILDDIR)/486quake/r_aclip.o \
 	$(BUILDDIR)/486quake/r_alias.o \

@@ -180,6 +180,8 @@ void D_SpriteDrawSpans (sspan_t *pspan)
 			s = snext;
 			t = tnext;
 
+			R_Slowdraw();
+
 		} while (count > 0);
 
 NextSpan:

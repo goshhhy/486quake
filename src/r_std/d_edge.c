@@ -111,6 +111,7 @@ void D_DrawSolidSurface (surf_t *surf, int color)
 			for ( ; u <= u2 ; u++)
 				((byte *)pdest)[u] = pix;
 		}
+		R_Slowdraw();
 	}
 }
 
@@ -221,8 +222,12 @@ void D_DrawSurfaces (void)
 					R_MakeSky ();
 				}
 
-				D_DrawSkyScans8 (s->spans);
 				D_DrawZSpans (s->spans);
+#ifdef SLOWDRAW
+				if ( r_slowdraw.value == 1 )
+					D_DrawSolidSurface (s, (int)s->data & 0xFF);
+#endif
+				D_DrawSkyScans8 (s->spans);
 			}
 			else if (s->flags & SURF_DRAWBACKGROUND)
 			{
@@ -232,8 +237,12 @@ void D_DrawSurfaces (void)
 				d_zistepv = 0;
 				d_ziorigin = -0.9;
 
-				D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
 				D_DrawZSpans (s->spans);
+#ifdef SLOWDRAW
+				if ( r_slowdraw.value == 1 )
+					D_DrawSolidSurface (s, (int)s->data & 0xFF);
+#endif
+				D_DrawSolidSurface (s, (int)r_clearcolor.value & 0xFF);
 			}
 			else if (s->flags & SURF_DRAWTURB)
 			{
@@ -259,8 +268,12 @@ void D_DrawSurfaces (void)
 				}
 
 				D_CalcGradients (pface);
-				Turbulent8 (s->spans);
 				D_DrawZSpans (s->spans);
+#ifdef SLOWDRAW
+				if ( r_slowdraw.value == 1 )
+					D_DrawSolidSurface (s, (int)s->data & 0xFF);
+#endif
+				Turbulent8 (s->spans);
 
 				if (s->insubmodel)
 				{
@@ -307,6 +320,11 @@ void D_DrawSurfaces (void)
 				D_CalcGradients (pface);
 
 				D_DrawZSpans (s->spans);
+
+#ifdef SLOWDRAW
+				if ( r_slowdraw.value == 1 )
+					D_DrawSolidSurface (s, (int)s->data & 0xFF);
+#endif
 
 				if ( (*(unsigned int*)(&d_zistepu) & 0x7fffffff) == 0 ) { //ugly... but fast
 					//D_DrawSolidSurface (s, 251);

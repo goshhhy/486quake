@@ -22,6 +22,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
+#ifdef SLOWDRAW
+extern void VGA_WaitVsync();
+void R_Slowdraw(void) {
+	if (r_slowdraw.value == 1) {
+		VID_Update(&scr_vrect);
+	}
+}
+#else
+void R_Slowdraw(void){}
+#endif
 
 /*
 ===============

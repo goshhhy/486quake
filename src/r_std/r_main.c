@@ -137,6 +137,7 @@ cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
 cvar_t	r_maxspans = {"r_maxspans", "5000"};
 cvar_t	r_perfdebug = {"r_perfdebug", "0"};
+cvar_t	r_slowdraw = {"r_slowdraw", "0"};
 
 extern cvar_t	scr_fov;
 
@@ -213,6 +214,7 @@ void R_Init (void)
 	Cvar_RegisterVariable (&r_aliastransadj);
 	Cvar_RegisterVariable (&r_maxspans);
 	Cvar_RegisterVariable (&r_perfdebug);
+	Cvar_RegisterVariable (&r_slowdraw);
 
 	Cvar_SetValue ("r_maxedges", (float)NUMSTACKEDGES);
 	Cvar_SetValue ("r_maxsurfs", (float)NUMSTACKSURFACES);
@@ -957,6 +959,11 @@ void R_RenderView_ (void)
 	byte	warpbuffer[WARP_WIDTH * WARP_HEIGHT];
 
 	r_warpbuffer = warpbuffer;
+
+#ifdef SLOWDRAW
+	if (r_slowdraw.value == 1)
+		Draw_TileClear(0,0,vid.width,vid.height);
+#endif
 
 	if (r_timegraph.value || r_speeds.value || r_dspeeds.value)
 		r_time1 = Sys_FloatTime ();

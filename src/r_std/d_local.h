@@ -69,6 +69,7 @@ extern float	d_sdivzorigin, d_tdivzorigin, d_ziorigin;
 extern fixed16_t	sadjust, tadjust;
 extern fixed16_t	bbextents, bbextentt;
 
+extern cvar_t	r_slowdraw;
 
 void D_DrawSpans8 (espan_t *pspans);
 void D_DrawSpans16 (espan_t *pspans);
@@ -91,6 +92,8 @@ extern int D_MipLevelForScale (float scale);
 extern void D_PolysetAff8Start (void);
 extern void D_PolysetAff8End (void);
 #endif
+
+extern void R_Slowdraw(void);
 
 extern short *d_pzbuffer;
 extern unsigned int d_zrowbytes, d_zwidth;

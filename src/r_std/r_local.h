@@ -74,6 +74,7 @@ extern cvar_t	r_numedges;
 extern cvar_t	r_maxspans;
 
 extern cvar_t	r_perfdebug;
+extern cvar_t	r_slowdraw;
 
 #define XCENTERING	(1.0 / 2.0)
 #define YCENTERING	(1.0 / 2.0)

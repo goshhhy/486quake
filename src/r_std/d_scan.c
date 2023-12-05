@@ -86,6 +86,7 @@ void D_WarpScreen (void)
 			dest[u+2] = row[turb[u+2]][col[u+2]];
 			dest[u+3] = row[turb[u+3]][col[u+3]];
 		}
+		R_Slowdraw();
 	}
 }
 
@@ -108,6 +109,7 @@ void D_DrawTurbulent8Span (void)
 		*r_turb_pdest++ = *(r_turb_pbase + (tturb<<6) + sturb);
 		r_turb_s += r_turb_sstep;
 		r_turb_t += r_turb_tstep;
+		R_Slowdraw();
 	} while (--r_turb_spancount > 0);
 }
 
@@ -136,6 +138,8 @@ void Turbulent8 (espan_t *pspan)
 	sdivz16stepu = d_sdivzstepu * 16;
 	tdivz16stepu = d_tdivzstepu * 16;
 	zi16stepu = d_zistepu * 16;
+
+	R_Slowdraw();
 
 	do
 	{
@@ -588,8 +592,8 @@ void D_DrawSpans16(espan_t *pspan) //qb: up it from 8 to 16.  This + unroll = bi
 		if (t < 0) t = 0;
 		else if (t > bbextentt) t = bbextentt;
 
-
-
+		R_Slowdraw();
+		
 		while (count-- > 0) // Manoel Kasimier
 		{
 			sdivz += sdivzstepu;
@@ -626,6 +630,8 @@ void D_DrawSpans16(espan_t *pspan) //qb: up it from 8 to 16.  This + unroll = bi
 			WRITEPDEST(-1);
 			s = snext;
 			t = tnext;
+
+			R_Slowdraw();
 		}
 		if (spancount > 0)
 		{
@@ -687,6 +693,7 @@ void D_DrawSpans16(espan_t *pspan) //qb: up it from 8 to 16.  This + unroll = bi
 				WRITEPDEST(-1);
 				break;
 			}
+			R_Slowdraw();
 		}
 	} while ((pspan = pspan->pnext) != NULL);
 }
@@ -740,7 +747,9 @@ void D_DrawSpansCHorz (espan_t *pspan)
 		t = (int)(tdivz * z) + tadjust;
 		if (t < 0) t = 0;
 		else if (t > bbextentt) t = bbextentt;
-
+		
+		R_Slowdraw();
+		
 		// {
 			spancountminus1 = (float)(spancount - 1);
 			sdivz += d_sdivzstepu * spancountminus1;
@@ -779,6 +788,8 @@ void D_DrawSpansCHorz (espan_t *pspan)
 				} while ( i < spancount );
 				break;
 			}
+
+			R_Slowdraw();
 		// }
 	} while ((pspan = pspan->pnext) != NULL);
 }

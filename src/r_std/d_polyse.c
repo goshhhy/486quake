@@ -672,6 +672,7 @@ void D_PolysetDrawSpans8 (spanpackage_t *pspanpackage)
 		}
 
 		pspanpackage++;
+		R_Slowdraw();
 	} while (pspanpackage->count != -999999);
 }
 #endif	// !id386
@@ -712,6 +713,7 @@ void D_PolysetFillSpans8 (spanpackage_t *pspanpackage)
 
 		pspanpackage++;
 	}
+	R_Slowdraw();
 }
 
 /*
