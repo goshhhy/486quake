@@ -93,7 +93,7 @@ TARGETS=$(BUILDDIR)/$(BINNAME).exe
 build_release: $(BUILDDIR)/$(BINNAME).exe
 
 $(BUILDDIR)/486quake:
-	mkdir -p $(BUILDDIR)/$(BINNAME)
+	mkdir -p $(BUILDDIR)/486quake
 
 all: $(BUILDDIR)/$(BINNAME).exe build_release $(TARGETS)
 
@@ -169,7 +169,7 @@ include src/r_${RENDERER}/renderer.mk
 $(BUILDDIR)/$(BINNAME) : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
 	$(CC) $(RELEASE_CFLAGS) -o $@ -Wl,--start-group $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS) -Wl,--end-group
 
-$(BUILDDIR)/$(BINNAME).exe : $(486QUAKE_OBJS) $(486QUAKE_COBJS)
+$(BUILDDIR)/$(BINNAME).exe : $(BUILDDIR)/486quake $(486QUAKE_OBJS) $(486QUAKE_COBJS)
 	$(CC) $(RELEASE_CFLAGS) -o $@ -Wl,--start-group $(486QUAKE_COBJS) $(486QUAKE_OBJS) $(LDFLAGS) -Wl,--end-group
 
 ####
