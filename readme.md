@@ -1,16 +1,25 @@
 486quake
 ========
 
-this repository contains a fork of the original Quake sources, with build support for MS-DOS restored.
+this repository contains 486quake, a fork of the original Quake sources with MS-DOS support restored,
+targeting era-appropriate hardware from the time of Quake's release.
 
-functionality remains almost identical. the primary goal is to re-optimize the assembly sources, focusing on non-pentium processors common in the mid-90s, such as the 486, Cyrix 6x86, and AMD K5/K6, focusing specifically on the 486 as a baseline.
+486quake does not add substantial functionality or bugfixes over the original Quake release. instead, it
+focuses on further optimizing the engine, and re-optimizing portions of it to run better on non-Pentium
+processors.
 
-this is both for fun, and in the interest of exploring the question of whether these competitors might have been more dominant if Quake had not so strongly favored the Pentium.
+despite the name, 486quake is not exclusively targeted at 486 processors. it has specific assembly
+optimizations for Intel 486, Pentium, and Cyrix 486 processors, and most other x86-compatible processors
+will work with at least one of these builds. non-intel processors are also supported, though they will
+only benefit from broader engine optimizations in 486quake, and not dedicated hand-optimized assembly.
+
+486quake does not currently address 64-bit portability issues, and is not tested on 64-bit systems. it 
+will likely only work properly on 32-bit platforms.
 
 building
 ========
 
-on a unix or posix-like host machine with a djgpp cross-compiler, source djgpp's environment script.
+on a unix-like host machine with a djgpp cross-compiler, source djgpp's environment script.
 
 then, from this source directory, you can just run
 
@@ -19,6 +28,17 @@ then, from this source directory, you can just run
 this will build the standard 486quake binary by default.
 
 to build all binaries, you can run the `build_all.sh` script.
+
+advanced build options
+======================
+
+you can pass the following options to `make` to change parameters of the build:
+
+OLEVEL: optimization level passed to compiler. defaults to "-O3".
+OCPU: CPU target. valid options are "386, 486, cx4, 586, mmx, 686". defaults to 486.
+OLTO: controls whether LTO is used. defaults to "yes", any other value means no.
+OASM: controls whether hand-written assembly is used. defaults to "yes", any other value means no.
+OSTRIP: strip options passed to compiler. defaults to "-s".
 
 results
 =======
