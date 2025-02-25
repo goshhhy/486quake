@@ -64,6 +64,8 @@ int SV_TruePointContents (vec3_t p);
 
 edict_t	*SV_TestEntityPosition (edict_t *ent);
 
+qboolean SV_RecursiveHullCheck (hull_t *hull, int num, float p1f, float p2f, vec3_t p1, vec3_t p2, trace_t *trace);
+
 trace_t SV_Move (vec3_t start, vec3_t mins, vec3_t maxs, vec3_t end, int type, edict_t *passedict);
 // mins and maxs are reletive
 
